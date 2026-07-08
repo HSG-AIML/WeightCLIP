@@ -1,0 +1,23 @@
+class: "ZooDataset"                # The CheckpointsDataset class to use
+epoch_idx: [43, 44]    # List of epoch indices to include in the dataset
+drop_nan: False                     # Whether to drop checkpoints with NaN values
+max_absolute_weight: null           # The maximum allowed absolute weight for checkpoints, ignored if null
+max_seeds: 100                     # Maximum number of different seeds to include (null = no limit)
+max_checkpoints: 500              # Maximum number of checkpoints to load (null = no limit)
+augmentations:
+  align: True                      # Whether to align checkpoints using weight matching
+  num_permutations: 5             # The number of permutations to generate for each checkpoint
+  # We provide the name of the permutation spec in sane.utils.git_re_basin.py
+  permutation_spec: zoo_resnet18slim_permutation_spec
+
+model_config:
+  model::type: "ResNet18Slim"
+  model::channels_in: 3
+  model::nlin: "relu"
+  model::init_type: "kaiming_uniform"
+  model::o_dim: 2
+  model::width_mult: 0.5
+  model::dropout: 0.2
+
+# Root folder of the model zoo
+root_dir: "/local/zoos/metatrain_resnet18slim_05x_normal3_init/casting/resnet18slim_05x/tune_zoo_casting_resnet18slim_05x"

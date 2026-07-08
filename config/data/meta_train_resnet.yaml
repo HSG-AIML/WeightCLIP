@@ -1,0 +1,29 @@
+split:
+  train: 0.7
+  val: 0.15
+  test: 0.15
+splitter: "RandomSplitter"                 # Strategy for splitting the dataset
+batch_size: 32                            # Batch size
+num_workers: 4                             # Number of worker processes for data loading
+drop_last: False                           # Whether to drop the last incomplete batch
+prefetch_factor: 4
+pin_memory: True
+# Multiple checkpoints datasets specified as a list
+# Each string references a config file in config/data/checkpoints_dataset/
+# e.g., "cifar10_cnn_large_fixed_seed" loads config/data/checkpoints_dataset/cifar10_cnn_large_fixed_seed.yaml
+checkpoints_dataset:
+  - "land_cover_resnet"
+  - "cactus_aerial_resnet"
+  - "ct_images_resnet"
+  - "lego_vs_generic_resnet"
+  - "cassava_leaf_resnet"
+  - "asl_resnet"
+  - "artworks_resnet"
+  - "blood_cells_resnet"
+  - "casting_resnet"
+  - "breakhis_resnet"
+
+defaults:
+  - _self_
+  - tokenizer: sparse_full_model_resnet
+  - tokens_dataset: per_window_cache_resnet

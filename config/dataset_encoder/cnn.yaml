@@ -1,0 +1,10 @@
+preset: deepsets_conv
+num_classes: auto
+embedding_dim: ${model.latent_dim}
+input_channels: 3
+image_size: [32, 32]
+set_size: 10
+classification_weight: 1.0
+classification_weight_anneal_epochs: 600
+normalize_embeddings: true
+embedding_scale: 4

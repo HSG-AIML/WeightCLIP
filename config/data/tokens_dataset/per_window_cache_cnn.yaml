@@ -1,0 +1,10 @@
+class: "CachedWindowedDataset"             # The BaseWindowedDataset class to use
+window_size: 118                                 # Size of windows to cut from tokenized sequences.
+num_windows_per_model: 1                     # Number of windows to sample per model. Can be an integer or "auto" for full coverage.
+pad_windows: True                                 # Whether to pad windows smaller than window_size with padding tokens.
+pad_to_max_length: False                          # Whether to infer the dataset max length and pad all emitted tensors to it.
+allow_overlapping_windows: False                  # Whether to allow overlapping windows
+window_distribution_strategy: "consecutive"       # Strategy for distributing non-overlapping windows. Options: "consecutive" (start from beginning), "distributed" (spread across sequence).
+
+# Disk caching configuration (reduces memory usage for large datasets)
+cache_dir: "/local/cache2/tokens"                                   # Cache directory (null = default ~/.sane/cache/tokens)

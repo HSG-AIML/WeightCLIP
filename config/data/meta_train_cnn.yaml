@@ -1,0 +1,39 @@
+split:
+  train: 0.7
+  val: 0.15
+  test: 0.15
+splitter: "RandomSplitter"                 # Strategy for splitting the dataset
+batch_size: 240                            # Batch size
+num_workers: 8                             # Number of worker processes for data loading
+drop_last: False                           # Whether to drop the last incomplete batch
+prefetch_factor: 5
+pin_memory: True
+# Multiple checkpoints datasets specified as a list
+# Each string references a config file in config/data/checkpoints_dataset/
+# e.g., "cifar10_cnn_large_fixed_seed" loads config/data/checkpoints_dataset/cifar10_cnn_large_fixed_seed.yaml
+checkpoints_dataset:
+  - "proptit_aif_homework_cnn3"
+  - "cactus_aerial_cnn3"
+  - "dl2020_cnn3"
+  - "four_shapes_cnn3"
+  - "e4040_assignment_cnn3"
+  - "car_classification_cnn3"
+  - "simpsons_characters_cnn3"
+  - "simpsons_challenge_cnn3"
+  - "breakhis_cnn3"
+  - "mushrooms_cnn3"
+  - "artworks_cnn3"
+  - "numta_bengali_cnn3"
+  - "lego_bricks_cnn3"
+  - "ads5035_cnn3"
+  - "day3_kaggle_cnn3"
+  - "ct_images_cnn3"
+  - "land_cover_cnn3"
+  - "casting_cnn3"
+  - "asl_cnn3"
+  - "cassava_leaf_cnn3"
+
+defaults:
+  - _self_
+  - tokenizer: sparse_full_model_cnn
+  - tokens_dataset: per_window_cache_cnn

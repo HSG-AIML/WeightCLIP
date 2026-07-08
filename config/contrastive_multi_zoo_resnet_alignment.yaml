@@ -1,0 +1,41 @@
+# Joint SANE + dataset-encoder alignment training
+trainer: "SANEJointAlignmentTrainer"
+device: "cuda"
+seed: 2020
+monitor_memory: False
+scheduler_epochs: 10000            # Optional scheduler horizon; only used for scheduler step planning
+epochs: 100
+validation_frequency: 10
+checkpoint_frequency: 25
+view_1_canon_train: true
+view_1_canon_valid: true
+
+# AMP
+use_amp: true
+amp_dtype: "bfloat16"
+max_grad_norm: 1.0
+
+# Contrastive token augmentations
+mask_probability: 0.0
+additive_noise: 0.0
+multiplicative_noise: 0.0
+
+# Running configuration
+num_cpus: 96
+num_gpus: 2
+cpu_per_trial: 16
+gpu_per_trial: 2
+
+experiment_name: "joint_alignment_multi_zoo_resnet_alignment"
+root_dir: "/local/experiments/clean/internal-sane/"
+
+defaults:
+  - _base_
+  - data: meta_train_resnet
+  - loss: gamma_contrast_recon
+  - model: sane
+  - optimizer: adamw
+  - scheduler: onecyclelr
+  - dataset_encoder: resnet
+  - alignment: default
+  - _self_

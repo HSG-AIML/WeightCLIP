@@ -1,0 +1,4 @@
+class: "GammaContrastReconLoss"    # Class name
+gamma: 0.0                       # Ratio controlling the weight of the contrastive loss wrt the reconstruction loss
+temperature: 0.1                   # Temperature parameter for contrastive loss
+normalize: "batch"                 # What kind of normalization to use for the MSE reconstruction loss 

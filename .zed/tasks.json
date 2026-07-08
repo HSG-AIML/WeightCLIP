@@ -1,0 +1,59 @@
+// Project tasks configuration. See https://zed.dev/docs/tasks for documentation.
+//
+// Example:
+[
+
+  {
+      "label": "Run file",
+      "command": "HYDRA_FULL_ERROR=1 RAY_TMPDIR=\"/local/ray_temp\" uv run $ZED_RELATIVE_FILE",
+      "use_new_terminal": true,
+      "reveal": "always",
+      "allow_concurrent_runs": true
+
+  },
+  {
+      "label": "Run file in TMUX",
+      "command": "tmux new-session -d -s run_file -e HYDRA_FULL_ERROR=1 -e RAY_TMPDIR=/local/ray_temp \"uv run run_multistage.py\" && tmux attach-session -t run_file",
+      "use_new_terminal": true,
+      "reveal": "always",
+      "allow_concurrent_runs": true
+
+  },
+  {
+      "label": "marimo: Edit current file",
+      "command": "uv run marimo edit --headless --port 2718 --watch $ZED_RELATIVE_FILE",
+      "use_new_terminal": true,
+      "reveal": "always",
+      "allow_concurrent_runs": false
+
+  },
+  {
+      "label": "clean env caches",
+      "command": "find /netscratch1/lurban/internal-sane -type d -name \"__pycache__\" -exec rm -rf {} + 2>/dev/null && find /netscratch1/lurban/internal-sane -type f -name \"*.pyc\" -delete && uv sync",
+      "use_new_terminal": true,
+      "reveal": "never",
+      "allow_concurrent_runs": false
+    },
+  {
+      "label": "clean token caches",
+      "command": "rm -rf /local/cache && rm -rf /local/cache2",
+      "use_new_terminal": true,
+      "reveal": "never",
+      "allow_concurrent_runs": false
+    },
+  {
+      "label": "kill & clean ray caches",
+      "command": "pkill -f ray && rm -rf /local/ray_tmp",
+      "use_new_terminal": true,
+      "reveal": "never",
+      "allow_concurrent_runs": false
+    },
+  {
+      "label": "clean all",
+      "command": "find /netscratch1/lurban/internal-sane -type d -name \"__pycache__\" -exec rm -rf {} + 2>/dev/null && find /netscratch1/lurban/internal-sane -type f -name \"*.pyc\" -delete && rm -rf /local/cache && rm -rf /local/cache2 && pkill -f ray && rm -rf /local/ray_temp && rm -rf /tmp/ray && uv sync",
+      "use_new_terminal": true,
+      "reveal": "always",
+      "allow_concurrent_runs": false
+    }
+
+]

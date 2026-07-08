@@ -1,0 +1,38 @@
+// Project-local debug tasks
+//
+// For more documentation on how to configure debug tasks,
+// see: https://zed.dev/docs/debugger
+[
+  {
+    "label": "Python Script",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "program": "${ZED_FILE}",
+    "pythonPath": "/local/internal-sane/.venv/bin/python",
+    "adapter_args": ["/usr/bin/python"],
+    "allow_concurrent_runs": false,
+    "use_new_terminal": false,
+    "env": {
+      "CUDA_LAUNCH_BLOCKING": "1",
+      "TORCH_USE_CUDA_DSA": "1",
+      "HYDRA_FULL_ERROR": "1",
+      "RAY_TMPDIR": "/local/ray_temp"
+    }
+  },
+  {
+    "label": "Pytest: Current File",
+    "adapter": "Debugpy",
+    "request": "launch",
+    "module": "pytest",
+    "args": ["${ZED_FILE}", "-v", "--runslow"],
+    "pythonPath": "/local/internal-sane/.venv/bin/python",
+    "allow_concurrent_runs": false,
+    "use_new_terminal": false,
+    "env": {
+      "CUDA_LAUNCH_BLOCKING": "1",
+      "TORCH_USE_CUDA_DSA": "1",
+      "HYDRA_FULL_ERROR": "1",
+      "RAY_TMPDIR": "/local/ray_temp"
+    }
+  }
+]

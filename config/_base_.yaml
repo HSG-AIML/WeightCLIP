@@ -1,0 +1,26 @@
+log_level: "INFO"
+runner: "ray"          # RayRunner uses Ray Tune by default; integer gpu_per_trial >= 2 switches one trial to Ray Train DDP.
+
+# Global Ray Config for all experiments
+num_samples: 1
+num_cpus: 32               # Total number of CPUs available
+num_gpus: 1                # Total number of GPUs available to Ray across all concurrent trials
+num_checkpoints_to_keep: 50 # Number of checkpoints to keep (Ray)
+ray_verbose: 3             # Ray Tune verbosity level
+
+# Weights and Biases
+wandb_project: null
+wandb_group: null
+wandb_api_key_file: null
+
+hydra:
+  run: {dir: .}
+  output_subdir: null
+  job_logging:
+    version: 1
+    disable_existing_loggers: false
+    root: {level: ERROR}
+  hydra_logging:
+    version: 1
+    disable_existing_loggers: false
+    root: {level: ERROR}

@@ -1,0 +1,8 @@
+weight: 0.25
+temperature: 1.0
+objective: "siglip" #{grid: ["multi_positive","siglip"]}
+siglip_bias_init: -4.0
+freeze_sane: false
+freeze_deepsets: false
+set_size: ${dataset_encoder.set_size}
+image_resize: ${dataset_encoder.image_size}

@@ -1,0 +1,13 @@
+class: "ZooDataset"                # The CheckpointsDataset class to use
+epoch_idx: [40, 41, 42, 43, 44]    # List of epoch indices to include in the dataset
+drop_nan: True                     # Whether to drop checkpoints with NaN values
+max_absolute_weight: 100           # The maximum allowed absolute weight for checkpoints, ignored if null
+max_checkpoints: 500              # Maximum number of checkpoints to load (null = no limit)
+augmentations:
+  align: True                      # Whether to align checkpoints using weight matching
+  num_permutations: 10             # The number of permutations to generate for each checkpoint
+  # We provide the name of the permutation spec in sane.utils.git_re_basin.py
+  permutation_spec: zoo_cnn_large_permutation_spec
+
+# Root folder of the model zoo
+root_dir: "/local/zoos/metatrain_cnn3_normal_scaled_init/four-shapes/cnn3/tune_zoo_four-shapes_cnn3"
