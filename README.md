@@ -50,6 +50,25 @@ Training proceeds in two steps: build the model zoos, then train the aligned lat
 
 Skip this if you already have zoos.
 
+**Pre-built CNN3 zoos (Hugging Face).** The trained CNN3 model zoos are published on the
+[Hugging Face repo](https://huggingface.co/aasefaw/WeightCLIP/tree/main/model_zoos/cnn3) as one packed
+`.tar.gz` per dataset (~2.5 GB total). Download and unpack them into a zoo root:
+
+```bash
+hf download aasefaw/WeightCLIP --include "model_zoos/cnn3/*" --local-dir /path/to/hf_zoos
+
+mkdir -p /path/to/zoos/cnn3
+for f in /path/to/hf_zoos/model_zoos/cnn3/*.tar.gz; do
+  tar -xzf "$f" -C /path/to/zoos/cnn3
+done
+```
+
+Each archive unpacks to that dataset's `tune_zoo_<dataset>_cnn3` directory; point the `root_dir` in the
+matching `config/data/checkpoints_dataset/<dataset>_cnn3.yaml` at the unpacked folder. (Only CNN3 zoos
+are provided pre-built — build the ResNet18 zoos with the steps below.)
+
+Otherwise, build the zoos from scratch:
+
 **1. Build `dataset.pt` files from raw images.** The zoo trainers read one `dataset.pt` per dataset.
 Get the raw images from the TANS meta-dataset
 ([train](https://www.dropbox.com/s/mvkyb7qsdmx5cud/raw_m_train.tar.gz?dl=0),
@@ -57,30 +76,30 @@ Get the raw images from the TANS meta-dataset
 `<root>/<task>/{tr,va,te}/<class>/<images>`, then convert them:
 
 ```bash
-# MetaTrain datasets (CNN and ResNet zoos share the same images)
+# Train datasets (CNN and ResNet zoos share the same images)
 python scripts/build_dataset_pts.py --src /path/to/raw_m_train --out /path/to/dataset_pts
 
-# MetaTest / OOD datasets. cifar10 is a MetaTest task but is not in the TANS download,
+# Test / OOD datasets. cifar10 is a Test task but is not in the TANS download,
 # so --with-cifar10 fetches it from torchvision in the same format (no manual download).
 python scripts/build_dataset_pts.py --src /path/to/raw_m_test --out /path/to/dataset_pts --with-cifar10
 ```
 
 This writes `<out>/<name>/dataset.pt` (float32 `[N, 3, 32, 32]` images in `[-1, 1]`), named to match
-the datasets in `config/data/meta_train_*.yaml`.
+the datasets in `config/data/train_*.yaml`.
 
 **2. Train the zoos.** Point the trainers at the built files with `DATASET_PT_ROOT` (output and other
 hyper-parameters are still set via env vars at the top of each script, e.g. `ZOO_ROOT`):
 
 ```bash
-DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_resnet18slim_metatrain_zoos.sh   # ResNet18 zoos
-DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_cnn3_metatrain_zoos.sh           # CNN zoos
+DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_resnet18slim_zoos.sh   # ResNet18 zoos
+DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_cnn3_zoos.sh           # CNN zoos
 ```
 
 ### Train WeightCLIP
 
 Training is configured with [Hydra](https://hydra.cc/); `run.py` selects an experiment with
 `--config-name` and accepts overrides for any field. The zoos used by each experiment are listed in
-`config/data/meta_train_resnet.yaml` and `config/data/meta_train_cnn.yaml`. A run writes a
+`config/data/train_resnet.yaml` and `config/data/train_cnn.yaml`. A run writes a
 `checkpoint.pt` and a sibling `dataset_encoder.pt` under `root_dir/experiment_name`.
 
 ```bash
@@ -90,7 +109,7 @@ python run.py --config-name contrastive_multi_zoo_cnn_alignment      # CNN
 # overrides and single-process (debug) execution
 python run.py --config-name contrastive_multi_zoo_resnet_alignment \
   root_dir=/path/to/experiments experiment_name=weightclip_resnet \
-  alignment.objective=siglip alignment.weight=0.5 dataset_encoder.set_size=10
+  alignment.objective=siglip alignment.weight=0.25 dataset_encoder.set_size=10
 python run.py --config-name contrastive_multi_zoo_resnet_alignment --debug
 ```
 
