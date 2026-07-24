@@ -785,11 +785,8 @@ def load_dataset_encoder(checkpoint_path: str | Path, device: str = "cuda", conf
     if preset in ENCODER_PRESETS:
         encoder_cfg = dict(ENCODER_PRESETS[preset])
     else:
-        # Fall back to inferring the preset from the saved module names.
-        has_resnet = any(key.startswith("feature_extractor.backbone.") for key in state_dict)
-        has_set_transformer = any(key.startswith("set_encoder.isab") or key.startswith("set_encoder.pma") for key in state_dict)
-        preset_name = f"{'set_transformer' if has_set_transformer else 'deepsets'}_{'resnet' if has_resnet else 'conv'}"
-        encoder_cfg = dict(ENCODER_PRESETS[preset_name])
+        # Only the DeepSets + Conv encoder is supported.
+        encoder_cfg = dict(ENCODER_PRESETS["deepsets_conv"])
 
     embedding_dim = cfg.get("embedding_dim", checkpoint.get("embedding_dim", state_dict["classifier.weight"].shape[1]))
 
@@ -797,14 +794,9 @@ def load_dataset_encoder(checkpoint_path: str | Path, device: str = "cuda", conf
     encoder_cfg["embedding_dim"] = embedding_dim
     encoder_cfg["normalize_embeddings"] = cfg.get("normalize_embeddings", checkpoint.get("normalize_embeddings", False))
     encoder_cfg["embedding_scale"] = cfg.get("embedding_scale", checkpoint.get("embedding_scale", 1.0))
-    
+
     if "input_channels" in cfg:
         encoder_cfg["input_channels"] = cfg["input_channels"]
-
-    if encoder_cfg.get("feature_extractor") == "resnet":
-        encoder_cfg.setdefault("fe_kwargs", {})
-        encoder_cfg["fe_kwargs"] = dict(encoder_cfg["fe_kwargs"])
-        encoder_cfg["fe_kwargs"]["pretrained"] = False
 
     model = build_dataset_encoder(encoder_cfg)
     model.load_state_dict(state_dict)

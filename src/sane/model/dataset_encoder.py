@@ -8,15 +8,12 @@ and exposes the same interface expected by ``DatasetAlignmentLoss``:
     .encode(x)        → embedding (B, embedding_dim)
     .embedding_dim    → int
 
-Supported configurations (all selectable via YAML):
+Supported configuration:
 
     ┌──────────────────────┬─────────────────────────────┐
     │ feature_extractor    │ set_encoder                 │
     ├──────────────────────┼─────────────────────────────┤
-    │ conv   (orig DeepSets│ deepsets  (sum/mean/max)    │  ← default, backward-compat
-    │ conv                 │ set_transformer (ISAB+PMA)  │
-    │ resnet (pretrained?) │ deepsets                    │
-    │ resnet (pretrained?) │ set_transformer             │
+    │ conv   (orig DeepSets│ deepsets  (sum/mean/max)    │
     └──────────────────────┴─────────────────────────────┘
 """
 
@@ -26,15 +23,12 @@ import torch.nn.functional as F
 from typing import Optional, Dict, Any
 
 from sane.model.feature_extractors import build_feature_extractor
-from sane.model.set_transformer import SetTransformerEncoder
 
 import logging
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
 # Thin DeepSets aggregator that works on *pre-extracted* features
-# ---------------------------------------------------------------------------
 class DeepSetsAggregator(nn.Module):
     """ρ-only DeepSets: aggregate pre-extracted per-element features → set embedding.
 
@@ -70,9 +64,7 @@ class DeepSetsAggregator(nn.Module):
         return self.rho(agg)
 
 
-# ---------------------------------------------------------------------------
 # Unified DatasetEncoder
-# ---------------------------------------------------------------------------
 class DatasetEncoder(nn.Module):
     """Modular dataset encoder = feature_extractor + set_encoder + classifier.
 
@@ -84,10 +76,10 @@ class DatasetEncoder(nn.Module):
         self,
         num_classes: int,
         # Feature extractor
-        feature_extractor: str = "conv",       # "conv" | "resnet"
+        feature_extractor: str = "conv",       # "conv"
         fe_kwargs: Optional[Dict[str, Any]] = None,
         # Set encoder
-        set_encoder: str = "deepsets",         # "deepsets" | "set_transformer"
+        set_encoder: str = "deepsets",         # "deepsets"
         se_kwargs: Optional[Dict[str, Any]] = None,
         # Embedding
         embedding_dim: int = 256,
@@ -100,22 +92,18 @@ class DatasetEncoder(nn.Module):
         fe_kwargs = dict(fe_kwargs or {})
         se_kwargs = dict(se_kwargs or {})
 
-        # ---- Feature extractor ------------------------------------------------
+        # Feature extractor
         if feature_extractor == "conv":
             fe_kwargs.setdefault("input_channels", input_channels)
-            fe_kwargs.setdefault("output_dim", 256)
-        elif feature_extractor == "resnet":
             fe_kwargs.setdefault("output_dim", 256)
         self.feature_extractor = build_feature_extractor(feature_extractor, **fe_kwargs)
         feat_dim = self.feature_extractor.output_dim
 
-        # ---- Set encoder ------------------------------------------------------
+        # Set encoder
         se_kwargs["feat_dim"] = feat_dim
         se_kwargs.setdefault("output_dim", embedding_dim)
         if set_encoder == "deepsets":
             self.set_encoder = DeepSetsAggregator(**se_kwargs)
-        elif set_encoder == "set_transformer":
-            self.set_encoder = SetTransformerEncoder(**se_kwargs)
         else:
             raise ValueError(f"Unknown set_encoder: {set_encoder}")
 
@@ -123,14 +111,13 @@ class DatasetEncoder(nn.Module):
         self.normalize_embeddings = normalize_embeddings
         self.embedding_scale = embedding_scale
 
-        # ---- Classifier head --------------------------------------------------
+        # Classifier head
         self.classifier = nn.Linear(self.embedding_dim, num_classes)
 
         logger.info(f"DatasetEncoder: feature_extractor={feature_extractor}, "
                      f"set_encoder={set_encoder}, embedding_dim={self.embedding_dim}, "
                      f"num_classes={num_classes}")
 
-    # ------------------------------------------------------------------
     def _extract_features(self, x: torch.Tensor) -> torch.Tensor:
         """(B, n, C, H, W) → (B, n, feat_dim)"""
         B, n = x.shape[:2]
@@ -166,9 +153,7 @@ class DatasetEncoder(nn.Module):
         return self.get_embeddings(x)
 
 
-# ---------------------------------------------------------------------------
 # Presets — single-string shortcuts for grid search
-# ---------------------------------------------------------------------------
 ENCODER_PRESETS: Dict[str, Dict[str, Any]] = {
     # Original DeepSets: Conv CNN + sum aggregation (same as legacy ImagePhi)
     "deepsets_conv": {
@@ -177,45 +162,10 @@ ENCODER_PRESETS: Dict[str, Dict[str, Any]] = {
         "set_encoder": "deepsets",
         "se_kwargs": {"hidden_dims": [512, 512], "aggregation": "sum", "dropout": 0.3},
     },
-    # DeepSets aggregation on top of ResNet-18 features
-    "deepsets_resnet": {
-        "feature_extractor": "resnet",
-        "fe_kwargs": {"output_dim": 256, "pretrained": False, "freeze_backbone": False},
-        "set_encoder": "deepsets",
-        "se_kwargs": {"hidden_dims": [512, 512], "aggregation": "sum", "dropout": 0.3},
-    },
-    "deepsets_resnet_pretrained": {
-        "feature_extractor": "resnet",
-        "fe_kwargs": {"output_dim": 256, "pretrained": True, "freeze_backbone": False},
-        "set_encoder": "deepsets",
-        "se_kwargs": {"hidden_dims": [512, 512], "aggregation": "sum", "dropout": 0.3},
-    },
-    # Set Transformer on top of ResNet-18 features
-    "set_transformer_resnet": {
-        "feature_extractor": "resnet",
-        "fe_kwargs": {"output_dim": 256, "pretrained": False, "freeze_backbone": False},
-        "set_encoder": "set_transformer",
-        "se_kwargs": {"d_model": 256, "nhead": 4, "num_layers": 2, "n_inducing": 32},
-    },
-    # Set Transformer on top of same Conv CNN as original DeepSets
-    "set_transformer_conv": {
-        "feature_extractor": "conv",
-        "fe_kwargs": {"hidden_dims": [64, 128, 256], "output_dim": 256, "dropout": 0.3},
-        "set_encoder": "set_transformer",
-        "se_kwargs": {"d_model": 256, "nhead": 4, "num_layers": 2, "n_inducing": 32},
-    },
-    "set_transformer_resnet_pretrained": {
-        "feature_extractor": "resnet",
-        "fe_kwargs": {"output_dim": 256, "pretrained": True, "freeze_backbone": False},
-        "set_encoder": "set_transformer",
-        "se_kwargs": {"d_model": 256, "nhead": 4, "num_layers": 2, "n_inducing": 32},
-    },
 }
 
 
-# ---------------------------------------------------------------------------
 # Factory from config dict
-# ---------------------------------------------------------------------------
 def build_dataset_encoder(config: Dict[str, Any]) -> DatasetEncoder:
     """Build a ``DatasetEncoder`` from a flat config dictionary.
 
