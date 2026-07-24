@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SCRIPT="$SCRIPT_DIR/train_resnet18_datasetpt_zoo.py"
+SCRIPT="$SCRIPT_DIR/train_resnet18slim_datasetpt_zoo.py"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 DEFAULT_DATASETS=(
@@ -25,7 +25,8 @@ else
     DATASETS=("${DEFAULT_DATASETS[@]}")
 fi
 
-SOURCE_ZOO_ROOT="${SOURCE_ZOO_ROOT:-/local/zoos/metatrain_resnet18_updated}"
+# DATASET_PT_ROOT points at the output of scripts/build_dataset_pts.py (<root>/<name>/dataset.pt).
+DATASET_PT_ROOT="${DATASET_PT_ROOT:?Set DATASET_PT_ROOT to the build_dataset_pts.py output directory}"
 INIT_TYPE="${INIT_TYPE:-normal}"
 if [[ -n "${ZOO_ROOT:-}" ]]; then
     OUTPUT_ZOO_ROOT="$ZOO_ROOT"
@@ -59,6 +60,7 @@ NUM_WORKERS="${NUM_WORKERS:-0}"
 GRAD_CLIP="${GRAD_CLIP:-0.0}"
 
 EXTRA_ARGS=("$@")
+
 SWEEP_ARGS=()
 if [[ "$NO_LR_SWEEP" == "1" ]]; then
     SWEEP_ARGS+=(--no-lr-sweep)
@@ -73,7 +75,7 @@ echo "========================================"
 echo "Regenerating MetaTrain ResNet18 Zoos"
 echo "========================================"
 echo "Datasets (${#DATASETS[@]}): ${DATASETS[*]}"
-echo "Source zoo root: $SOURCE_ZOO_ROOT"
+echo "dataset.pt root: $DATASET_PT_ROOT"
 echo "Output zoo root: $OUTPUT_ZOO_ROOT"
 echo "Seeds per dataset: $NUM_SEEDS"
 if [[ "$NO_LR_SWEEP" == "1" ]]; then
@@ -111,7 +113,7 @@ for dataset in "${DATASETS[@]}"; do
 
     "$PYTHON_BIN" "$SCRIPT" \
         --dataset "$dataset" \
-        --source-zoo-root "$SOURCE_ZOO_ROOT" \
+        --dataset-pt-root "$DATASET_PT_ROOT" \
         --zoo-root "$OUTPUT_ZOO_ROOT" \
         --num-seeds "$NUM_SEEDS" \
         --epochs "$EPOCHS" \

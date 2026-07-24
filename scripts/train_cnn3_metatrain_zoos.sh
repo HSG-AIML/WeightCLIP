@@ -29,8 +29,9 @@ DATASETS=(
     "cassava_leaf_cnn3"
 )
 
-SOURCE_ZOO_ROOT="/local/zoos/metatrain_cnn3_updated"
-ZOO_ROOT="/local/zoos/metatrain_cnn3"
+# DATASET_PT_ROOT points at the output of scripts/build_dataset_pts.py (<root>/<name>/dataset.pt).
+DATASET_PT_ROOT="${DATASET_PT_ROOT:?Set DATASET_PT_ROOT to the build_dataset_pts.py output directory}"
+ZOO_ROOT="${ZOO_ROOT:-/local/zoos/metatrain_cnn3}"
 NUM_SEEDS=100
 LR_SWEEP_SEEDS=5
 LR_CANDIDATES=(3e-5 1e-4 3e-4 1e-3 3e-3 1e-2 3e-2 1e-1)
@@ -53,7 +54,7 @@ echo "========================================"
 echo "Regenerating MetaTrain CNN3 Zoos"
 echo "========================================"
 echo "Datasets (${#DATASETS[@]}): ${DATASETS[*]}"
-echo "Source zoo root: $SOURCE_ZOO_ROOT"
+echo "dataset.pt root: $DATASET_PT_ROOT"
 echo "Output zoo root: $ZOO_ROOT"
 echo "Seeds per dataset: $NUM_SEEDS"
 echo "LR sweep seeds: $LR_SWEEP_SEEDS"
@@ -80,7 +81,7 @@ for dataset in "${DATASETS[@]}"; do
 
     "$PYTHON_BIN" "$SCRIPT" \
         --dataset "$dataset" \
-        --source-zoo-root "$SOURCE_ZOO_ROOT" \
+        --dataset-pt-root "$DATASET_PT_ROOT" \
         --zoo-root "$ZOO_ROOT" \
         --num-seeds "$NUM_SEEDS" \
         --lr-sweep-seeds "$LR_SWEEP_SEEDS" \

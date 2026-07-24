@@ -33,7 +33,6 @@ for path in (SRC_DIR, REPO_ROOT):
 from sane.data.datasets.zoo_dataset_models import ResNet18Slim
 
 
-DEFAULT_SOURCE_ZOO_ROOT = Path("/local/zoos/metatrain_resnet18_updated")
 DEFAULT_OUTPUT_ZOO_ROOT = Path("/local/zoos/metatrain_resnet18")
 DEFAULT_LR_CANDIDATES = [5e-3, 1e-2, 2e-2, 3e-2, 5e-2]
 
@@ -138,17 +137,34 @@ def arch_name(width_mult: float) -> str:
     return f"resnet18slim_{width_mult_tag(width_mult)}"
 
 
-def resolve_source_root(dataset_name: str, source_zoo_root: str | Path, width_mult: float) -> Path:
-    dash_name = canonical_dataset_name(dataset_name)
-    root = Path(source_zoo_root) / dash_name / arch_name(width_mult) / f"tune_zoo_{dash_name}_{arch_name(width_mult)}"
-    if not root.exists():
-        raise FileNotFoundError(f"Source zoo not found: {root}")
-    return root
-
-
 def resolve_output_root(dataset_name: str, output_zoo_root: str | Path, width_mult: float) -> Path:
     dash_name = canonical_dataset_name(dataset_name)
     return Path(output_zoo_root) / dash_name / arch_name(width_mult) / f"tune_zoo_{dash_name}_{arch_name(width_mult)}"
+
+
+def find_dataset_pt_in_root(dataset_name: str, dataset_pt_root: str | Path) -> Path:
+    """Locate ``<root>/<name>/dataset.pt`` built by build_dataset_pts.py.
+
+    Tries the canonical dash name, its underscore form, and the full dataset id.
+    """
+    dash_name = canonical_dataset_name(dataset_name)
+    candidates = [dash_name, dash_name.replace("-", "_"), dataset_name]
+    root = Path(dataset_pt_root)
+    for name in candidates:
+        candidate = root / name / "dataset.pt"
+        if candidate.exists():
+            return candidate
+    return root / candidates[0] / "dataset.pt"
+
+
+def resolve_source_dataset_pt(args: argparse.Namespace) -> Path:
+    """Resolve the source dataset.pt from --dataset-pt or --dataset-pt-root."""
+    if args.dataset_pt is not None:
+        path = Path(args.dataset_pt)
+        return path if path.name == "dataset.pt" else path / "dataset.pt"
+    if args.dataset_pt_root is not None:
+        return find_dataset_pt_in_root(args.dataset, args.dataset_pt_root)
+    raise ValueError("Provide --dataset-pt or --dataset-pt-root (build files with scripts/build_dataset_pts.py)")
 
 
 def register_pickle_compat_types() -> None:
@@ -648,7 +664,8 @@ def load_or_run_lr_sweep(dataset_name: str, dataset_pt: Path, output_root: Path,
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train ResNet18Slim model zoos from existing dataset.pt files")
     parser.add_argument("--dataset", required=True, help="Dataset id such as asl_resnet")
-    parser.add_argument("--source-zoo-root", default=str(DEFAULT_SOURCE_ZOO_ROOT), help="Root containing the source ResNet18Slim zoos")
+    parser.add_argument("--dataset-pt", default=None, help="Explicit path to a prebuilt dataset.pt (or a dir containing it)")
+    parser.add_argument("--dataset-pt-root", default=None, help="Root of build_dataset_pts.py output; loads <root>/<name>/dataset.pt")
     parser.add_argument("--zoo-root", default=str(DEFAULT_OUTPUT_ZOO_ROOT), help="Root for the regenerated ResNet18Slim zoos")
     parser.add_argument("--num-seeds", type=int, default=50, help="Number of final seeds to train")
     parser.add_argument("--lr-candidates", nargs="+", type=float, default=DEFAULT_LR_CANDIDATES, help="Candidate max learning rates for the sweep")
@@ -686,8 +703,7 @@ def available_devices(gpu_id: int | None) -> list[str]:
 def main() -> None:
     args = parse_args()
     configure_cuda_runtime()
-    source_root = resolve_source_root(args.dataset, args.source_zoo_root, args.width_mult)
-    source_dataset_pt = source_root / "dataset.pt"
+    source_dataset_pt = resolve_source_dataset_pt(args)
     if not source_dataset_pt.exists():
         raise FileNotFoundError(f"dataset.pt not found: {source_dataset_pt}")
 
@@ -700,7 +716,7 @@ def main() -> None:
     split_sizes = dataset_summary(preview_dataset)
     dataset_meta = {"num_classes": infer_num_classes(preview_dataset), "channels_in": infer_channels_in(preview_dataset)}
     print(f"Dataset: {args.dataset} -> {canonical_dataset_name(args.dataset)}")
-    print(f"Source root: {source_root}")
+    print(f"Source dataset.pt: {source_dataset_pt}")
     print(f"Output root: {output_root}")
     print(f"Architecture: {arch_name(args.width_mult)}")
     print(f"Splits: train={split_sizes['trainset']} val={split_sizes['valset']} test={split_sizes['testset']}")

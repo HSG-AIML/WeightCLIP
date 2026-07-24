@@ -48,12 +48,32 @@ Training proceeds in two steps: build the model zoos, then train the aligned lat
 
 ### Build the model zoos
 
-Skip this if you already have zoos. Source and output paths are set via environment variables at the
-top of each script (e.g. `SOURCE_ZOO_ROOT`, `ZOO_ROOT`).
+Skip this if you already have zoos.
+
+**1. Build `dataset.pt` files from raw images.** The zoo trainers read one `dataset.pt` per dataset.
+Get the raw images from the TANS meta-dataset
+([train](https://www.dropbox.com/s/mvkyb7qsdmx5cud/raw_m_train.tar.gz?dl=0),
+[test](https://www.dropbox.com/s/jaiq173z0fruzw4/raw_m_test.tar.gz?dl=0)), which are laid out as
+`<root>/<task>/{tr,va,te}/<class>/<images>`, then convert them:
 
 ```bash
-bash scripts/train_resnet18slim_metatrain_zoos.sh   # ResNet18 zoos
-bash scripts/train_cnn3_metatrain_zoos.sh           # CNN zoos
+# MetaTrain datasets (CNN and ResNet zoos share the same images)
+python scripts/build_dataset_pts.py --src /path/to/raw_m_train --out /path/to/dataset_pts
+
+# MetaTest / OOD datasets. cifar10 is a MetaTest task but is not in the TANS download,
+# so --with-cifar10 fetches it from torchvision in the same format (no manual download).
+python scripts/build_dataset_pts.py --src /path/to/raw_m_test --out /path/to/dataset_pts --with-cifar10
+```
+
+This writes `<out>/<name>/dataset.pt` (float32 `[N, 3, 32, 32]` images in `[-1, 1]`), named to match
+the datasets in `config/data/meta_train_*.yaml`.
+
+**2. Train the zoos.** Point the trainers at the built files with `DATASET_PT_ROOT` (output and other
+hyper-parameters are still set via env vars at the top of each script, e.g. `ZOO_ROOT`):
+
+```bash
+DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_resnet18slim_metatrain_zoos.sh   # ResNet18 zoos
+DATASET_PT_ROOT=/path/to/dataset_pts bash scripts/train_cnn3_metatrain_zoos.sh           # CNN zoos
 ```
 
 ### Train WeightCLIP
