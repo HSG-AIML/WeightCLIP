@@ -144,11 +144,7 @@ def clear_cache_config(cache_dir: Union[str, Path], dry_run: bool = False) -> bo
         return False
 
 
-def clear_old_caches(
-    base_cache_dir: Union[str, Path] = "/local/cache/tokens",
-    keep_latest_n: int = 1,
-    dry_run: bool = False
-) -> int:
+def clear_old_caches(base_cache_dir: Union[str, Path] = "/local/cache/tokens", keep_latest_n: int = 1, dry_run: bool = False) -> int:
     """
     Remove old cache configurations, keeping only the most recent N.
 
@@ -208,8 +204,4 @@ def get_cache_size(cache_dir: Union[str, Path]) -> Dict[str, float]:
 
     _, total_bytes = _get_cache_files_info(cache_dir)
 
-    return {
-        "bytes": total_bytes,
-        "mb": total_bytes / 1e6,
-        "gb": total_bytes / 1e9
-    }
+    return {"bytes": total_bytes, "mb": total_bytes / 1e6, "gb": total_bytes / 1e9}
