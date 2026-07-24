@@ -20,4 +20,4 @@ model_config:
   model::dropout: 0.2
 
 # Root folder of the model zoo
-root_dir: "/local/zoos/metatrain_resnet18slim_05x_normal3_init/cassava-leaf/resnet18slim_05x/tune_zoo_cassava-leaf_resnet18slim_05x"
+root_dir: "/path/to/zoos/resnet18/cassava-leaf/resnet18slim_05x/tune_zoo_cassava-leaf_resnet18slim_05x"

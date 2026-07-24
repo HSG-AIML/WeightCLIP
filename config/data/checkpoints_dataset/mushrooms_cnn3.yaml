@@ -10,4 +10,4 @@ augmentations:
   permutation_spec: zoo_cnn_large_permutation_spec
 
 # Root folder of the model zoo
-root_dir: "/local/zoos/metatrain_cnn3_normal_scaled_init/mushrooms/cnn3/tune_zoo_mushrooms_cnn3"
+root_dir: "/path/to/zoos/cnn3/mushrooms/cnn3/tune_zoo_mushrooms_cnn3"
