@@ -13,11 +13,11 @@ import torch
 from torch.utils.data import DataLoader
 
 from hnet_trainer import HyperResNetTrainer
-from hnet_utils import RESNET_METATRAIN_DATASETS, SCRIPT_DIR, mean_std, normalize_dataset_name, set_seed
+from hnet_utils import RESNET_TRAIN_DATASETS, SCRIPT_DIR, mean_std, normalize_dataset_name, set_seed
 
 from dataset_to_model import extract_dataset_embeddings_cached, get_bn_conditioning_loader
 from ood_utils import _adapt_output_layer, create_model_from_state_dict, finetune_state_dict, get_model_config_cached, get_train_test_loaders, uses_bn_conditioning
-from tans_utils import get_metatest_datasets, get_num_classes as get_resnet_num_classes, get_zoo_path as get_resnet_zoo_path
+from tans_utils import get_test_datasets, get_num_classes as get_resnet_num_classes, get_zoo_path as get_resnet_zoo_path
 
 
 def _resize_output_layer(state: Dict, layer_key: str, num_classes: int) -> Dict:
@@ -154,7 +154,7 @@ def evaluate_single_dataset(trainer: HyperResNetTrainer, dataset_name: str, args
 
 
 def run_evaluation(trainer: HyperResNetTrainer, args) -> Dict[str, Dict]:
-    datasets = list(args.ood_datasets) if args.ood_datasets else list(get_metatest_datasets("resnet"))
+    datasets = list(args.ood_datasets) if args.ood_datasets else list(get_test_datasets("resnet"))
     results: Dict[str, Dict] = {}
     print("=" * 70)
     print("OOD Evaluation")
@@ -245,8 +245,8 @@ def build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--seeds", type=int, nargs="*", default=[42, 0, 777], help="Test-time seeds. Evaluation is re-run per seed and averaged. Pass a single value to disable averaging.")
     p.add_argument("--save-multiseed", action="store_true", help="Include per-seed raw results in the saved JSON.")
 
-    p.add_argument("--train-datasets", nargs="+", default=list(RESNET_METATRAIN_DATASETS))
-    p.add_argument("--ood-datasets", nargs="+", default=None, help="OOD datasets to evaluate (default: the MetaTest split).")
+    p.add_argument("--train-datasets", nargs="+", default=list(RESNET_TRAIN_DATASETS))
+    p.add_argument("--ood-datasets", nargs="+", default=None, help="OOD datasets to evaluate (default: the Test split).")
     p.add_argument("--width-mult", type=float, default=0.5)
     p.add_argument("--target-classes", type=int, default=None, help="Fixed classifier output width. Defaults to max num_classes over train datasets.")
 
@@ -271,7 +271,7 @@ def build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--token-position-embedding", choices=["learned", "sinusoidal"], default="learned")
     p.add_argument("--tokenizer-ignore-bn", action="store_true")
 
-    # Meta-training
+    # Training
     p.add_argument("--meta-epochs", type=int, default=100)
     p.add_argument("--outer-lr", type=float, default=1e-3)
     p.add_argument("--outer-wd", type=float, default=1e-4)

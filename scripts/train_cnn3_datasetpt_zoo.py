@@ -32,7 +32,7 @@ for path in (SRC_DIR, REPO_ROOT):
 from sane.data.datasets.zoo_dataset_models import CNN3
 
 
-DEFAULT_OUTPUT_ZOO_ROOT = Path("/local/zoos/metatrain_cnn3")
+DEFAULT_OUTPUT_ZOO_ROOT = Path("/local/zoos/train_cnn3")
 DEFAULT_LR_CANDIDATES = [1e-4, 3e-4, 1e-3, 3e-3]
 
 

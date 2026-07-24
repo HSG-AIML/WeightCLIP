@@ -21,7 +21,7 @@ except Exception:  # pragma: no cover
 
 from dataset_to_model import _load_shared_latent_context, _resolve_anchor_state, apply_direct_decoder, fit_direct_decoder, resolve_checkpoint_file
 from ood_utils import (
-    METATEST_DATASETS,
+    TEST_DATASETS,
     _adapt_output_layer,
     _get_finetune_defaults,
     _make_optimizer,
@@ -43,9 +43,9 @@ from ood_utils import (
 from shell_geometry_utils import compute_sphere_center, mean_token_norm, scale_toward_radius
 from sane.data.datasets import ZooDataset
 
-# Datasets the meta-train model zoos were trained on. Used to estimate the
+# Datasets the train model zoos were trained on. Used to estimate the
 # in-distribution shell radius from re-encoded zoo models for shell scaling.
-METATRAIN_DATASETS = [
+TRAIN_DATASETS = [
     "proptit-aif-homework", "cactus-aerial", "dl2020", "four-shapes", "e4040-assignment",
     "car-classification", "simpsons-characters", "simpsons-challenge", "breakhis", "mushrooms",
     "artworks", "numta-bengali", "lego-bricks", "ads5035", "day3-kaggle",
@@ -108,7 +108,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Direct-decode model latents, then refine them with gradients through the decoder.")
     p.add_argument("--sane-ckpt", "--checkpoint_path", dest="sane_ckpt", required=True, help="Path to checkpoint.pt or its checkpoint directory.")
     p.add_argument("--dataset-encoder-ckpt", default=None, help="Optional dataset encoder checkpoint. Defaults to sibling dataset_encoder.pt.")
-    p.add_argument("--datasets", "--dataset", "--ood-datasets", nargs="+", default=list(METATEST_DATASETS), help="Target datasets. Use 'metatest' for the built-in OOD set.")
+    p.add_argument("--datasets", "--dataset", "--ood-datasets", nargs="+", default=list(TEST_DATASETS), help="Target datasets. Use 'test' for the built-in OOD set.")
     p.add_argument("--arch", "--model_type", dest="arch", default="cnn3", choices=["cnn3", "resnet", "resnet18slim"], help="Zoo model family.")
     p.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     p.add_argument("--seed", type=int, default=42)
@@ -134,7 +134,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--scale-to-shell", action=argparse.BooleanOptionalAction, default=True, help="Scale the selected latent to the ID shell radius before refinement.")
     p.add_argument("--sphere-center", "--sphere_center", dest="sphere_center", choices=["origin", "mean", "pairwise"], default="origin", help="Center used to measure the shell radius for scaling.")
     p.add_argument("--shell-alpha", type=float, default=1.0, help="Interpolation strength for shell scaling.")
-    p.add_argument("--id-models-per-dataset", "--id_models_per_dataset", dest="id_models_per_dataset", type=int, default=20, help="Meta-train checkpoints per zoo used to estimate the ID shell radius.")
+    p.add_argument("--id-models-per-dataset", "--id_models_per_dataset", dest="id_models_per_dataset", type=int, default=20, help="Train checkpoints per zoo used to estimate the ID shell radius.")
 
     # Kept only because dataset_to_model's shared loader prints/reads these fields.
     p.set_defaults(top_k=1, finetune_epochs=0)
@@ -149,7 +149,7 @@ def parse_args() -> argparse.Namespace:
 def expand_datasets(names: list[str]) -> list[str]:
     out: list[str] = []
     for name in names:
-        out.extend(METATEST_DATASETS if name.lower() in {"metatest", "metatest_all", "all", "all_ood"} else [name])
+        out.extend(TEST_DATASETS if name.lower() in {"test", "test_all", "all", "all_ood"} else [name])
     return list(dict.fromkeys(out))
 
 
@@ -182,7 +182,7 @@ def latent_radius(z: torch.Tensor, mode: str, seed: int = 0) -> tuple[float, flo
 
 
 def compute_id_radius_from_zoos(args: argparse.Namespace, context: dict[str, Any]) -> tuple[float, float, int]:
-    """Re-encode meta-train zoo models with the encoder and estimate the ID shell radius.
+    """Re-encode train zoo models with the encoder and estimate the ID shell radius.
 
     For ``sphere_center`` of ``origin``/``mean`` we average per-model token-norms; for
     ``pairwise`` we accumulate per-token points and use the pairwise-distance estimator.
@@ -197,7 +197,7 @@ def compute_id_radius_from_zoos(args: argparse.Namespace, context: dict[str, Any
     token_points: list[np.ndarray] = []
     n_encoded = 0
 
-    for ds_name in METATRAIN_DATASETS:
+    for ds_name in TRAIN_DATASETS:
         zoo_path = get_zoo_path(ds_name, model_type=args.arch)
         if zoo_path is None or not Path(zoo_path).exists():
             continue
@@ -222,11 +222,11 @@ def compute_id_radius_from_zoos(args: argparse.Namespace, context: dict[str, Any
 
     if sphere_center in ("origin", "mean"):
         if not norms:
-            raise RuntimeError("Failed to estimate ID radius: no meta-train zoo checkpoints encoded.")
+            raise RuntimeError("Failed to estimate ID radius: no train zoo checkpoints encoded.")
         return float(np.mean(norms)), float(np.std(norms)), len(norms)
 
     if not token_points:
-        raise RuntimeError("Failed to estimate ID pairwise radius: no meta-train zoo checkpoints encoded.")
+        raise RuntimeError("Failed to estimate ID pairwise radius: no train zoo checkpoints encoded.")
     pts = np.concatenate(token_points, axis=0)
     r_pairwise, stderr = estimate_pairwise_radius(pts, samples=5000, seed=args.seed)
     return float(r_pairwise), float(stderr), int(n_encoded)

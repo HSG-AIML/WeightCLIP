@@ -33,7 +33,7 @@ for path in (SRC_DIR, REPO_ROOT):
 from sane.data.datasets.zoo_dataset_models import ResNet18Slim
 
 
-DEFAULT_OUTPUT_ZOO_ROOT = Path("/local/zoos/metatrain_resnet18")
+DEFAULT_OUTPUT_ZOO_ROOT = Path("/local/zoos/train_resnet18")
 DEFAULT_LR_CANDIDATES = [5e-3, 1e-2, 2e-2, 3e-2, 5e-2]
 
 

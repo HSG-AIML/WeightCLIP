@@ -35,24 +35,24 @@ DEFAULT_TEST_SEEDS = [42, 0, 777]
 
 _SPLITS = {
     "cnn3": {
-        "metatrain": (
+        "train": (
             "proptit-aif-homework", "cactus-aerial", "dl2020", "four-shapes",
             "e4040-assignment", "car-classification", "simpsons-characters",
             "simpsons-challenge", "breakhis", "mushrooms", "artworks",
             "numta-bengali", "lego-bricks", "ads5035", "day3-kaggle",
             "ct-images", "land-cover", "casting", "asl", "cassava-leaf",
         ),
-        "metatest": (
+        "test": (
             "colorectal-histology", "covid19", "cifar10",
             "speed-limit-signs", "honeybee-pollen", "real-or-drawing",
         ),
     },
     "resnet18slim": {
-        "metatrain": (
+        "train": (
             "cactus-aerial", "lego-vs-generic", "asl", "breakhis", "artworks",
             "blood-cells", "ct-images", "land-cover", "casting", "cassava-leaf",
         ),
-        "metatest": (
+        "test": (
             "colorectal-histology", "cifar10",
             
         ),
@@ -98,18 +98,18 @@ def _arch(architecture):
     return canonicalize_model_type(architecture or "cnn3")
 
 
-def get_metatrain_datasets(architecture=None):
+def get_train_datasets(architecture=None):
     a = _arch(architecture)
     if a not in _SPLITS:
         raise ValueError(f"No TANS split for: {a}")
-    return _SPLITS[a]["metatrain"]
+    return _SPLITS[a]["train"]
 
 
-def get_metatest_datasets(architecture=None):
+def get_test_datasets(architecture=None):
     a = _arch(architecture)
     if a not in _SPLITS:
         raise ValueError(f"No TANS split for: {a}")
-    return _SPLITS[a]["metatest"]
+    return _SPLITS[a]["test"]
 
 
 # zoo data loading

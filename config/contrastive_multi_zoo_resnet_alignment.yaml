@@ -31,7 +31,7 @@ root_dir: "/local/experiments/clean/internal-sane/"
 
 defaults:
   - _base_
-  - data: meta_train_resnet
+  - data: train_resnet
   - loss: gamma_contrast_recon
   - model: sane
   - optimizer: adamw

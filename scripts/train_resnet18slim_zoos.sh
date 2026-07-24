@@ -31,9 +31,9 @@ INIT_TYPE="${INIT_TYPE:-normal}"
 if [[ -n "${ZOO_ROOT:-}" ]]; then
     OUTPUT_ZOO_ROOT="$ZOO_ROOT"
 elif [[ "$INIT_TYPE" == "uniform" ]]; then
-    OUTPUT_ZOO_ROOT="/local/zoos/metatrain_resnet18"
+    OUTPUT_ZOO_ROOT="/local/zoos/train_resnet18"
 elif [[ "$INIT_TYPE" == "normal" ]]; then
-    OUTPUT_ZOO_ROOT="/local/zoos/metatrain_resnet18"
+    OUTPUT_ZOO_ROOT="/local/zoos/train_resnet18"
 else
     echo "Unsupported INIT_TYPE: $INIT_TYPE" >&2
     exit 1
@@ -72,7 +72,7 @@ else
 fi
 
 echo "========================================"
-echo "Regenerating MetaTrain ResNet18 Zoos"
+echo "Regenerating Train ResNet18 Zoos"
 echo "========================================"
 echo "Datasets (${#DATASETS[@]}): ${DATASETS[*]}"
 echo "dataset.pt root: $DATASET_PT_ROOT"

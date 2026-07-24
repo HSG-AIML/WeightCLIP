@@ -42,10 +42,10 @@ from sane.data.datasets.zoo_dataset_models import CNN3, ResNet18Slim, get_model
 from sane.model.autoencoder import SANEAutoEncoder
 from sane.model.dataset_encoder import ENCODER_PRESETS, build_dataset_encoder
 
-CNN3_ZOO_BASE = "/local/zoos/metatrain_cnn3"
-RESNET18SLIM_ZOO_BASE = "/local/zoos/metatrain_resnet18"
+CNN3_ZOO_BASE = "/local/zoos/train_cnn3"
+RESNET18SLIM_ZOO_BASE = "/local/zoos/train_resnet18"
 
-METATEST_DATASETS =  ["colorectal-histology", "covid19", "speed-limit-signs", "honeybee-pollen", "real-or-drawing", "cifar10"]
+TEST_DATASETS =  ["colorectal-histology", "covid19", "speed-limit-signs", "honeybee-pollen", "real-or-drawing", "cifar10"]
 
 DATASET_CLASS_COUNTS = {
     "colorectal-histology": 8,

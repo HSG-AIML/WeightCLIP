@@ -33,8 +33,8 @@ from tans_common import (
     aggregate_seed_results,
     format_startup_line,
     get_default_finetune_lr,
-    get_metatest_datasets,
-    get_metatrain_datasets,
+    get_test_datasets,
+    get_train_datasets,
     get_num_classes,
     load_dataset_pt,
     load_models_from_zoo,
@@ -75,13 +75,13 @@ def _should_log_epoch(epoch, total_epochs, interval=_TRAIN_LOG_INTERVAL):
     return step == 1 or step == total or step % int(interval) == 0
 
 
-def _load_metatrain_data(args, device):
-    print("\nLoading meta-train data")
+def _load_train_data(args, device):
+    print("\nLoading train data")
     extractor = ImageFeatureExtractor(device)
     generator = FunctionalEmbeddingGenerator(args.n_noise_samples, device, args.seed, args.architecture)
     datasets, zoo, q_train, q_test, fdim = [], {}, {}, {}, None
 
-    for name in get_metatrain_datasets(args.architecture):
+    for name in get_train_datasets(args.architecture):
         ms, accs, sds = load_models_from_zoo(name, args.n_nets, device, args.architecture)
         if ms is None:
             print(f"  {name}: no checkpoints, skipping")
@@ -99,7 +99,7 @@ def _load_metatrain_data(args, device):
         fdim = fdim or embs.shape[1]
 
     if not datasets:
-        raise RuntimeError("No meta-train datasets loaded")
+        raise RuntimeError("No train datasets loaded")
     total_models = sum(len(zoo[name]["sds"]) for name in datasets)
     print(f"Loaded {len(datasets)} datasets | {total_models} models | functional_dim={fdim}")
     return datasets, zoo, q_train, q_test, fdim
@@ -143,7 +143,7 @@ def _save_checkpoint(path, enc_q, enc_m, pred, args, fdim, device, is_best, epoc
 
 def run_train(args, device):
     set_seed(args.seed)
-    datasets, zoo, q_train, q_test, fdim = _load_metatrain_data(args, device)
+    datasets, zoo, q_train, q_test, fdim = _load_train_data(args, device)
     if args.n_groups is not None:
         datasets = datasets[: args.n_groups]
 
@@ -235,7 +235,7 @@ def _build_retrieval_space(args, ckpt, device):
     generator = FunctionalEmbeddingGenerator(ckpt["n_noise_samples"], device, args.seed, ckpt["architecture"])
     datasets, embs, sds, accs = [], [], [], []
 
-    for name in get_metatrain_datasets(ckpt["architecture"]):
+    for name in get_train_datasets(ckpt["architecture"]):
         ms, dataset_accs, dataset_sds = load_models_from_zoo(name, args.n_nets, device, ckpt["architecture"])
         if ms is None:
             continue
@@ -249,7 +249,7 @@ def _build_retrieval_space(args, ckpt, device):
             accs.append(float(dataset_accs[i]))
 
     if not embs:
-        raise RuntimeError("Retrieval space is empty: no meta-train checkpoints loaded")
+        raise RuntimeError("Retrieval space is empty: no train checkpoints loaded")
     print(f"\nRetrieval space: {len(sds)} models")
     return {"datasets": datasets, "embs": torch.stack(embs), "sds": sds, "accs": accs}
 
@@ -339,7 +339,7 @@ def run_test_once(args, device):
 
     space = _build_retrieval_space(args, ckpt, device)
     extractor = ImageFeatureExtractor(device)
-    test_datasets = list(args.ood_datasets) if args.ood_datasets else list(get_metatest_datasets(ckpt["architecture"]))
+    test_datasets = list(args.ood_datasets) if args.ood_datasets else list(get_test_datasets(ckpt["architecture"]))
     test_datasets = [d for d in test_datasets if get_num_classes(d, ckpt["architecture"]) <= 20]
     print(f"Testing {len(test_datasets)} datasets")
 
@@ -391,12 +391,12 @@ def parse_args():
 
     args = parser.parse_args()
     args.architecture = canonicalize_model_type(args.architecture)
-    args.n_groups = len(get_metatrain_datasets(args.architecture)) if args.n_groups is None else int(args.n_groups)
+    args.n_groups = len(get_train_datasets(args.architecture)) if args.n_groups is None else int(args.n_groups)
     args.load_path = args.save_path if args.load_path is None else args.load_path
     if args.finetune_lr is None:
         args.finetune_lr = get_default_finetune_lr(args.architecture)
     args.seeds = resolve_seeds(args)
-    args.ood_datasets = list(get_metatest_datasets(args.architecture)) if args.ood_datasets is None else list(args.ood_datasets)
+    args.ood_datasets = list(get_test_datasets(args.architecture)) if args.ood_datasets is None else list(args.ood_datasets)
     return args
 
 

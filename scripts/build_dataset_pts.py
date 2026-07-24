@@ -2,12 +2,12 @@
 """Build ``dataset.pt`` files from raw image folders, in the format the zoo
 trainers consume.
 
-The raw MetaTrain / MetaTest images from the TANS repo are laid out per task as::
+The raw Train / Test images from the TANS repo are laid out per task as::
 
     <src>/<task>/{tr,va,te}/<class>/<image files>
 
-    MetaTrain: https://www.dropbox.com/s/mvkyb7qsdmx5cud/raw_m_train.tar.gz?dl=0
-    MetaTest:  https://www.dropbox.com/s/jaiq173z0fruzw4/raw_m_test.tar.gz?dl=0
+    Train: https://www.dropbox.com/s/mvkyb7qsdmx5cud/raw_m_train.tar.gz?dl=0
+    Test:  https://www.dropbox.com/s/jaiq173z0fruzw4/raw_m_test.tar.gz?dl=0
 
 For every task this writes::
 
@@ -23,16 +23,16 @@ which is exactly what ``train_cnn3_datasetpt_zoo.py`` and
 Preprocessing:  Resize((32,32)) -> RGB -> ToTensor([0,1]) -> Normalize(0.5,0.5) => [-1,1].
 Class indices are aligned across tr/va/te using the train split's class ordering.
 
-CIFAR-10 is a MetaTest task but is *not* part of the raw TANS download, so pass
+CIFAR-10 is a Test task but is *not* part of the raw TANS download, so pass
 ``--with-cifar10`` (or list ``cifar10`` in ``--only``) to materialize it from
 torchvision in the same format -- no manual download needed.
 
 Usage:
-    # MetaTrain zoos (CNN + ResNet share the same images)
-    python scripts/build_dataset_pts.py --src /path/MetaTrain --out /path/dataset_pts
+    # Train zoos (CNN + ResNet share the same images)
+    python scripts/build_dataset_pts.py --src /path/Train --out /path/dataset_pts
 
-    # MetaTest / OOD (includes cifar10, fetched from torchvision)
-    python scripts/build_dataset_pts.py --src /path/MetaTest --out /path/dataset_pts --with-cifar10
+    # Test / OOD (includes cifar10, fetched from torchvision)
+    python scripts/build_dataset_pts.py --src /path/Test --out /path/dataset_pts --with-cifar10
 
     # cifar10 only
     python scripts/build_dataset_pts.py --out /path/dataset_pts --with-cifar10

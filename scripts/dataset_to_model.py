@@ -20,7 +20,7 @@ for path in (src_dir, repo_root):
         sys.path.insert(0, path_str)
 
 from ood_utils import (
-    METATEST_DATASETS,
+    TEST_DATASETS,
     MemoryBankMixtureTranslator,
     canonicalize_model_type,
     decode_embedding,
@@ -839,9 +839,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     # Evaluation mode.
     parser.add_argument("--arch", choices=["cnn3", "resnet18slim"], default="cnn3", help="Architecture family to evaluate.")
     parser.add_argument("--mode", choices=["direct_decode", "neighbour", "memory_bank", "scratch", "both"], default="direct_decode", help="Which evaluation mode to run.")
-    parser.add_argument("--ood-datasets", nargs="*", default=None, help="Meta-test datasets to evaluate. Defaults to the built-in meta-test list.")
+    parser.add_argument("--ood-datasets", nargs="*", default=None, help="Test datasets to evaluate. Defaults to the built-in test list.")
 
-    parser.add_argument("--max-models-per-dataset", type=int, default=200, help="Maximum training checkpoints per meta-train dataset for the direct map.")
+    parser.add_argument("--max-models-per-dataset", type=int, default=200, help="Maximum training checkpoints per train dataset for the direct map.")
     parser.add_argument("--subset-size", type=int, default=10, help="Images per dataset-encoder set.")
     parser.add_argument("--ood-samples", type=int, default=100, help="Dataset-encoder samples per target dataset.")
     parser.add_argument("--neighbour-metric", "--neighbor-metric", dest="neighbour_metric", choices=["euclidean", "cosine"], default="cosine", help="Distance metric for neighbour retrieval.")
@@ -889,7 +889,7 @@ def main() -> None:
     args = parser.parse_args()
 
     args.arch = canonicalize_model_type(args.arch)
-    args.ood_datasets = args.ood_datasets or list(METATEST_DATASETS)
+    args.ood_datasets = args.ood_datasets or list(TEST_DATASETS)
     set_seed(args.seed)
     if args.finetune_lr is None:
         args.finetune_lr = get_default_finetune_lr(args.arch)

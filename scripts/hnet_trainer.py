@@ -2,9 +2,9 @@
 """Trainer for the Text2Model EVLayer-based hypernetwork.
 
 Two-phase training:
-  1. Warm-start the DeepSets dataset encoder by classifying which meta-train
+  1. Warm-start the DeepSets dataset encoder by classifying which train
      ResNet zoo a randomly-sampled image set belongs to.
-  2. Meta-train the hypernetwork via Text2Model's outer/inner trick:
+  2. Train the hypernetwork via Text2Model's outer/inner trick:
        generated init -> short inner SGD adaptation -> outer step via
        autograd.grad(weights, hnet.params, grad_outputs=init - final).
 """
@@ -33,7 +33,7 @@ from tans_utils import get_num_classes as get_resnet_num_classes, get_zoo_path a
 
 
 class HyperResNetTrainer:
-    """Owns the dataset encoder, hypernetwork, tokenizer, and meta-training loop."""
+    """Owns the dataset encoder, hypernetwork, tokenizer, and training loop."""
 
     def __init__(self, args):
         self.args = args

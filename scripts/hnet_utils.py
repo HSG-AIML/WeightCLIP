@@ -51,7 +51,7 @@ from tans_utils import get_num_classes as get_resnet_num_classes, get_zoo_path a
 
 # constants
 
-RESNET_METATRAIN_DATASETS = ["land-cover", "cactus-aerial", "ct-images", "lego-vs-generic", "cassava-leaf", "asl", "artworks", "blood-cells", "casting", "breakhis"]
+RESNET_TRAIN_DATASETS = ["land-cover", "cactus-aerial", "ct-images", "lego-vs-generic", "cassava-leaf", "asl", "artworks", "blood-cells", "casting", "breakhis"]
 
 
 # helpers

@@ -38,23 +38,23 @@ from ood_utils import canonicalize_model_type, create_model_from_state_dict, get
 
 _FIXED_DATASET_SPLITS = {
     'cnn3': {
-        'metatrain': (
+        'train': (
             'proptit-aif-homework', 'cactus-aerial', 'dl2020', 'four-shapes', 'e4040-assignment',
             'car-classification', 'simpsons-characters', 'simpsons-challenge', 'breakhis', 'mushrooms',
             'artworks', 'numta-bengali', 'lego-bricks', 'ads5035', 'day3-kaggle',
             'ct-images', 'land-cover', 'casting', 'asl', 'cassava-leaf',
         ),
-        'metatest': (
+        'test': (
             'colorectal-histology', 'covid19', 'cifar10', 'speed-limit-signs',
             'honeybee-pollen', 'real-or-drawing',
         ),
     },
     'resnet18slim': {
-        'metatrain': (
+        'train': (
             'cactus-aerial', 'lego-vs-generic', 'asl', 'breakhis', 'artworks',
             'blood-cells', 'ct-images', 'land-cover', 'casting', 'cassava-leaf',
         ),
-        'metatest': (
+        'test': (
             'colorectal-histology', 'covid19', 'cifar10', 'speed-limit-signs',
             'honeybee-pollen', 'real-or-drawing',
         ),
@@ -73,12 +73,12 @@ def _get_fixed_dataset_split(split, architecture=None):
     return _FIXED_DATASET_SPLITS[family][split]
 
 
-def get_metatrain_datasets(architecture=None):
-    return _get_fixed_dataset_split('metatrain', architecture)
+def get_train_datasets(architecture=None):
+    return _get_fixed_dataset_split('train', architecture)
 
 
-def get_metatest_datasets(architecture=None):
-    return _get_fixed_dataset_split('metatest', architecture)
+def get_test_datasets(architecture=None):
+    return _get_fixed_dataset_split('test', architecture)
 
 
 # TANS Loss Function (Exact reproduction from TANS/retrieval/loss.py)

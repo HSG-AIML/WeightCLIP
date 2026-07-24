@@ -31,7 +31,7 @@ DATASETS=(
 
 # DATASET_PT_ROOT points at the output of scripts/build_dataset_pts.py (<root>/<name>/dataset.pt).
 DATASET_PT_ROOT="${DATASET_PT_ROOT:?Set DATASET_PT_ROOT to the build_dataset_pts.py output directory}"
-ZOO_ROOT="${ZOO_ROOT:-/local/zoos/metatrain_cnn3}"
+ZOO_ROOT="${ZOO_ROOT:-/local/zoos/train_cnn3}"
 NUM_SEEDS=100
 LR_SWEEP_SEEDS=5
 LR_CANDIDATES=(3e-5 1e-4 3e-4 1e-3 3e-3 1e-2 3e-2 1e-1)
@@ -51,7 +51,7 @@ GRAD_CLIP=1.0
 EXTRA_ARGS=("$@")
 
 echo "========================================"
-echo "Regenerating MetaTrain CNN3 Zoos"
+echo "Regenerating Train CNN3 Zoos"
 echo "========================================"
 echo "Datasets (${#DATASETS[@]}): ${DATASETS[*]}"
 echo "dataset.pt root: $DATASET_PT_ROOT"
