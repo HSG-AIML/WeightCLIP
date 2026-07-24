@@ -14,16 +14,7 @@ from sane.utils.model_utils import get_activation_layer, initialize_weights
 
 
 class MLP(nn.Module):
-    def __init__(
-        self,
-        i_dim=14,
-        h_dim=[30, 15],
-        o_dim=10,
-        nlin="leakyrelu",
-        dropout=0.2,
-        init_type="uniform",
-        use_bias=True,
-    ):
+    def __init__(self, i_dim=14, h_dim=[30, 15], o_dim=10, nlin="leakyrelu", dropout=0.2, init_type="uniform", use_bias=True):
         super().__init__()
         self.use_bias = use_bias
         # init module list
@@ -40,9 +31,7 @@ class MLP(nn.Module):
         # get if bias should be used or not
         for k in range(len(h_dim) - 1):
             # add linear layer
-            self.module_list.append(
-                nn.Linear(h_dim[k], h_dim[k + 1], bias=self.use_bias)
-            )
+            self.module_list.append(nn.Linear(h_dim[k], h_dim[k + 1], bias=self.use_bias))
             # add nonlinearity
             self.module_list.append(get_activation_layer(nlin))
             if dropout > 0:
@@ -74,14 +63,7 @@ class MLP(nn.Module):
 
 
 class CNN(nn.Module):
-    def __init__(
-        self,
-        channels_in,
-        o_dim=10,
-        nlin="leakyrelu",
-        dropout=0.2,
-        init_type="uniform",
-    ):
+    def __init__(self, channels_in, o_dim=10, nlin="leakyrelu", dropout=0.2, init_type="uniform"):
         super().__init__()
         # init module list
         self.module_list = nn.ModuleList()
@@ -139,14 +121,7 @@ class CNN(nn.Module):
 
 
 class CNN2(nn.Module):
-    def __init__(
-        self,
-        channels_in,
-        o_dim=10,
-        nlin="leakyrelu",
-        dropout=0.2,
-        init_type="uniform",
-    ):
+    def __init__(self, channels_in, o_dim=10, nlin="leakyrelu", dropout=0.2, init_type="uniform"):
         super().__init__()
         # init module list
         self.module_list = nn.ModuleList()
@@ -199,14 +174,7 @@ class CNN2(nn.Module):
 
 
 class CNN3(nn.Module):
-    def __init__(
-        self,
-        channels_in,
-        o_dim=10,
-        nlin="leakyrelu",
-        dropout=0.2,
-        init_type="uniform",
-    ):
+    def __init__(self, channels_in, o_dim=10, nlin="leakyrelu", dropout=0.2, init_type="uniform"):
         super().__init__()
         # init module list
         self.module_list = nn.ModuleList()
@@ -369,20 +337,11 @@ class ResCNN(nn.Module):
     Added a function to load state-dicts from the cnns without res cons
     """
 
-    def __init__(
-        self,
-        channels_in,
-        o_dim=10,
-        nlin="leakyrelu",
-        dropout=0.2,
-        init_type="uniform",
-    ):
+    def __init__(self, channels_in, o_dim=10, nlin="leakyrelu", dropout=0.2, init_type="uniform"):
         super().__init__()
 
         if dropout > 0.0:
-            raise NotImplementedError(
-                "dropout is not yet impemented for the residual connections.|"
-            )
+            raise NotImplementedError("dropout is not yet impemented for the residual connections.|")
         # init module list
         self.module_list = nn.ModuleList()
         ### ASSUMES 28x28 image size
@@ -398,9 +357,7 @@ class ResCNN(nn.Module):
         ## output [15, 8, 12, 12]
         ## residual connection stack 1
         self.res1_pool = nn.MaxPool2d(kernel_size=5, stride=2, padding=0)
-        self.res1_conv = nn.Conv2d(
-            in_channels=channels_in, out_channels=8, kernel_size=1, stride=1, padding=0
-        )
+        self.res1_conv = nn.Conv2d(in_channels=channels_in, out_channels=8, kernel_size=1, stride=1, padding=0)
 
         ## compose layer 2
         self.module_list.append(nn.Conv2d(8, 6, 5))
@@ -411,18 +368,14 @@ class ResCNN(nn.Module):
             self.module_list.append(nn.Dropout(dropout))
         ## output [15, 6, 4, 4]
         self.res2_pool = nn.MaxPool2d(kernel_size=5, stride=2, padding=0)
-        self.res2_conv = nn.Conv2d(
-            in_channels=8, out_channels=6, kernel_size=1, stride=1, padding=0
-        )
+        self.res2_conv = nn.Conv2d(in_channels=8, out_channels=6, kernel_size=1, stride=1, padding=0)
 
         ## compose layer 3
         self.module_list.append(nn.Conv2d(6, 4, 2))
         self.module_list.append(get_activation_layer(nlin))
         ## output [15, 4, 3, 3]
         self.res3_pool = nn.MaxPool2d(kernel_size=2, stride=1, padding=0)
-        self.res3_conv = nn.Conv2d(
-            in_channels=6, out_channels=4, kernel_size=1, stride=1, padding=0
-        )
+        self.res3_conv = nn.Conv2d(in_channels=6, out_channels=4, kernel_size=1, stride=1, padding=0)
 
         ## add flatten layer
         self.module_list.append(nn.Flatten())
@@ -689,14 +642,7 @@ class ResNetBase(ResNet):
         # call init from parent class
         super().__init__(block=block, layers=layers, num_classes=out_dim)
         # adpat first layer to fit dimensions
-        self.conv1 = nn.Conv2d(
-            channels_in,
-            64,
-            kernel_size=(3, 3),
-            stride=(1, 1),
-            padding=(1, 1),
-            bias=False,
-        )
+        self.conv1 = nn.Conv2d(channels_in, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
         self.maxpool = nn.Identity()
 
         if init_type is not None:

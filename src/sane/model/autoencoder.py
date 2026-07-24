@@ -156,10 +156,7 @@ class SANEAutoEncoder(nn.Module):
         Returns:
             Dict[str, torch.Tensor]: A dictionary containing the output tensors 'z', 'z_tilde' (if translator is not None), 'x_hat', and 'z_p' (if projector is not None).
         """
-        out = {
-            'x': x,
-            'p': p
-        }
+        out = {'x': x, 'p': p}
         if mask is not None:
             out['mask'] = mask
 

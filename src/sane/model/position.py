@@ -51,9 +51,7 @@ class LearnedPositionEmbeddings(nn.Module):
             AssertionError: If the position tensors do not have the same batch size as `inputs`.
             AssertionError: If the position tensors do not have the same sequence length as `inputs`.
         """
-        assert (
-            inputs.ndim == 3
-        ), f"Number of dimensions should be 3, but input shape is {inputs.shape}"
+        assert (inputs.ndim == 3), f"Number of dimensions should be 3, but input shape is {inputs.shape}"
         assert pos.shape[2] == len(
             self.max_positions
         ), f"Position tensors should have as many dimensions as max_positions ({len(self.max_positions)}), but got {pos.shape[2]}."

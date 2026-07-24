@@ -16,9 +16,7 @@ class TensorBoardLogger:
 
             self.writer = SummaryWriter(log_dir=str(log_dir))
         except ImportError:
-            logger.warning(
-                "TensorBoard is not available. Install tensorboard to enable logging."
-            )
+            logger.warning("TensorBoard is not available. Install tensorboard to enable logging.")
 
     def log(self, metrics: dict[str, Any], step: int) -> None:
         if self.writer is None:
@@ -26,11 +24,7 @@ class TensorBoardLogger:
         for tag, value in self._flatten_metrics(metrics):
             self.writer.add_scalar(tag, value, step)
 
-    def _flatten_metrics(
-        self,
-        metrics: Mapping[str, Any],
-        prefix: str = "",
-    ) -> list[tuple[str, float]]:
+    def _flatten_metrics(self, metrics: Mapping[str, Any], prefix: str = "") -> list[tuple[str, float]]:
         items: list[tuple[str, float]] = []
 
         for key, value in metrics.items():

@@ -24,9 +24,6 @@ class GammaContrastReconLoss(CompositeLoss):
             normalize (bool): What normalization strategy to use in the MSE reconstruction loss. Can be None, 'token', 'window' or 'batch'. Default: 'token'
             std_eps (float): A small value added to the standard deviation to avoid division by zero in the MSE reconstruction loss. Default is 1e-6.
         """
-        losses = [
-            NTXentLoss(temperature=temperature),
-            MSEReconstructionLoss(reduction=reduction, normalize=normalize, std_eps=std_eps),
-        ]
+        losses = [NTXentLoss(temperature=temperature), MSEReconstructionLoss(reduction=reduction, normalize=normalize, std_eps=std_eps)]
         ratios = [gamma]
         super(GammaContrastReconLoss, self).__init__(name, losses, ratios)

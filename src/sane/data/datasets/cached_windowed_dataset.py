@@ -100,85 +100,49 @@ class CachedWindowedDataset(WindowedDataset):
             config_dir = config_dir / f"instance_{instance_id}"
         effective_cache_dir = config_dir / subdir / split_part
 
-        self._disk_cache = DiskCache(
-            cache_dir=effective_cache_dir,
-            create_dirs=True,
-        )
-        logger.info(
-            f"Cache ({cache_mode}): {effective_cache_dir}"
-        )
+        self._disk_cache = DiskCache(cache_dir=effective_cache_dir, create_dirs=True)
+        logger.info(f"Cache ({cache_mode}): {effective_cache_dir}")
 
         if self._data_config_for_hash is not None:
-            config_file = (
-                self._base_cache_dir
-                / f"{dataset_part}_{self._cache_key_suffix}"
-                / "data_config.yaml"
-            )
+            config_file = (self._base_cache_dir / f"{dataset_part}_{self._cache_key_suffix}" / "data_config.yaml")
             if not self._read_only and not config_file.exists():
-                config_file.write_text(
-                    yaml.dump(self._data_config_for_hash, default_flow_style=False)
-                )
+                config_file.write_text(yaml.dump(self._data_config_for_hash, default_flow_style=False))
 
         self._cached_checkpoints: Set[int] = set()
         self._load_cache_metadata()
         if not self._read_only:
             self.preload_cache()
 
-    def _get_window(
-        self, checkpoint_idx: int, window_idx: int
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _get_window(self, checkpoint_idx: int, window_idx: int) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if self._cache_mode == "per_model":
             windows = self._disk_cache.get(self._get_cache_key(checkpoint_idx))
             if windows is None:
                 if self._read_only:
-                    raise RuntimeError(
-                        f"Cache miss for checkpoint {checkpoint_idx} in read-only mode"
-                    )
-                raise RuntimeError(
-                    f"Cache miss for checkpoint {checkpoint_idx} after preload"
-                )
+                    raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} in read-only mode")
+                raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} after preload")
             return windows[window_idx]
         else:
-            window = self._disk_cache.get(
-                self._get_window_cache_key(checkpoint_idx, window_idx)
-            )
+            window = self._disk_cache.get(self._get_window_cache_key(checkpoint_idx, window_idx))
             if window is None:
                 if self._read_only:
-                    raise RuntimeError(
-                        f"Cache miss for checkpoint {checkpoint_idx} window {window_idx} in read-only mode"
-                    )
-                raise RuntimeError(
-                    f"Cache miss for checkpoint {checkpoint_idx} window {window_idx} after preload"
-                )
+                    raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} window {window_idx} in read-only mode")
+                raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} window {window_idx} after preload")
             return window
 
-    def _get_all_windows(
-        self, checkpoint_idx: int
-    ) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
+    def _get_all_windows(self, checkpoint_idx: int) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
         if self._cache_mode == "per_model":
             windows = self._disk_cache.get(self._get_cache_key(checkpoint_idx))
             if windows is None:
                 if self._read_only:
-                    raise RuntimeError(
-                        f"Cache miss for checkpoint {checkpoint_idx} in read-only mode"
-                    )
-                raise RuntimeError(
-                    f"Cache miss for checkpoint {checkpoint_idx} after preload"
-                )
+                    raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} in read-only mode")
+                raise RuntimeError(f"Cache miss for checkpoint {checkpoint_idx} after preload")
             return windows
         else:
-            windows = [
-                self._disk_cache.get(self._get_window_cache_key(checkpoint_idx, w))
-                for w in range(self._windows_per_checkpoint)
-            ]
+            windows = [self._disk_cache.get(self._get_window_cache_key(checkpoint_idx, w)) for w in range(self._windows_per_checkpoint)]
             if any(w is None for w in windows):
                 if self._read_only:
-                    raise RuntimeError(
-                        f"Incomplete cache for checkpoint {checkpoint_idx} in read-only mode"
-                    )
-                raise RuntimeError(
-                    f"Incomplete cache for checkpoint {checkpoint_idx} after preload"
-                )
+                    raise RuntimeError(f"Incomplete cache for checkpoint {checkpoint_idx} in read-only mode")
+                raise RuntimeError(f"Incomplete cache for checkpoint {checkpoint_idx} after preload")
             return windows
 
     def _generate_cache_key_suffix(self) -> str:
@@ -193,16 +157,10 @@ class CachedWindowedDataset(WindowedDataset):
             "allow_overlapping": self.allow_overlapping_windows,
             "window_strategy": self.window_distribution_strategy,
         }
-        self._config_params = {
-            **config_for_metadata,
-            "split_name": self.split_name or "none",
-            "dataset_name": self.dataset_name or "none",
-        }
+        self._config_params = {**config_for_metadata, "split_name": self.split_name or "none", "dataset_name": self.dataset_name or "none"}
 
         if self._data_config_for_hash is not None:
-            config_str = json.dumps(
-                self._data_config_for_hash, sort_keys=True, default=str
-            )
+            config_str = json.dumps(self._data_config_for_hash, sort_keys=True, default=str)
         else:
             config_str = "_".join(f"{k}_{v}" for k, v in config_for_metadata.items())
 
@@ -251,12 +209,8 @@ class CachedWindowedDataset(WindowedDataset):
             metadata = self._read_cache_metadata(metadata_path)
             if metadata is None:
                 return
-            self._cached_checkpoints = set(
-                int(idx) for idx in metadata.get("checkpoints", {}).keys()
-            )
-            logger.info(
-                f"Loaded metadata: {len(self._cached_checkpoints)} checkpoints cached"
-            )
+            self._cached_checkpoints = set(int(idx) for idx in metadata.get("checkpoints", {}).keys())
+            logger.info(f"Loaded metadata: {len(self._cached_checkpoints)} checkpoints cached")
         except Exception as e:
             logger.warning(f"Failed to load cache metadata: {e}. Starting fresh.")
             self._cached_checkpoints = set()
@@ -300,23 +254,17 @@ class CachedWindowedDataset(WindowedDataset):
             return
 
         if self._read_only:
-            raise RuntimeError(
-                f"Cannot populate cache for checkpoint {checkpoint_idx} in read-only mode"
-            )
+            raise RuntimeError(f"Cannot populate cache for checkpoint {checkpoint_idx} in read-only mode")
 
         windows = self._generate_windows(checkpoint_idx)
         if not windows or not isinstance(windows, list):
-            raise ValueError(
-                f"Generated invalid windows for checkpoint {checkpoint_idx}"
-            )
+            raise ValueError(f"Generated invalid windows for checkpoint {checkpoint_idx}")
 
         if self._cache_mode == "per_model":
             self._disk_cache.put(self._get_cache_key(checkpoint_idx), windows)
         else:
             for window_idx, window in enumerate(windows):
-                self._disk_cache.put(
-                    self._get_window_cache_key(checkpoint_idx, window_idx), window
-                )
+                self._disk_cache.put(self._get_window_cache_key(checkpoint_idx, window_idx), window)
 
         self._cached_checkpoints.add(checkpoint_idx)
 
@@ -349,19 +297,13 @@ class CachedWindowedDataset(WindowedDataset):
         if checkpoint_indices is None:
             checkpoint_indices = list(range(len(self.checkpoints_dataset)))
 
-        pending = [
-            idx for idx in checkpoint_indices if idx not in self._cached_checkpoints
-        ]
+        pending = [idx for idx in checkpoint_indices if idx not in self._cached_checkpoints]
         if not pending:
             logger.info("Cache already complete, skipping preload")
             return
 
-        logger.info(
-            f"Preloading cache ({self._cache_mode}) for {len(pending)} checkpoints..."
-        )
-        logger.info(
-            f"Preloading cache ({self._cache_mode}) for {len(pending)} checkpoints..."
-        )
+        logger.info(f"Preloading cache ({self._cache_mode}) for {len(pending)} checkpoints...")
+        logger.info(f"Preloading cache ({self._cache_mode}) for {len(pending)} checkpoints...")
         for i, idx in enumerate(pending):
             self._ensure_checkpoint_cached(idx)
             if (i + 1) % 400 == 0:

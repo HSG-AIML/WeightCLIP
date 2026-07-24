@@ -12,11 +12,7 @@ class JsonLogger:
         self._path.parent.mkdir(parents=True, exist_ok=True)
 
     def log(self, metrics: dict[str, Any], step: int) -> None:
-        record = {
-            "step": step,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            **metrics,
-        }
+        record = {"step": step, "timestamp": datetime.now(timezone.utc).isoformat(), **metrics}
         with open(self._path, "a") as f:
             f.write(json.dumps(record) + "\n")
 

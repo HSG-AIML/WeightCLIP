@@ -30,10 +30,7 @@ def build_logical_dataset_registry(zoo_paths: list[str]) -> dict[str, int]:
     return registry
 
 
-def collapse_batch_to_logical_datasets(
-    dataset_indices: torch.Tensor,
-    zoo_paths: list[str],
-) -> tuple[list[str], torch.Tensor]:
+def collapse_batch_to_logical_datasets(dataset_indices: torch.Tensor, zoo_paths: list[str]) -> tuple[list[str], torch.Tensor]:
     logical_name_to_pos: Dict[str, int] = {}
     raw_idx_to_pos: Dict[int, int] = {}
     logical_zoo_paths = []
@@ -47,11 +44,7 @@ def collapse_batch_to_logical_datasets(
             logical_zoo_paths.append(zoo_paths[ri])
         raw_idx_to_pos[ri] = logical_name_to_pos[name]
 
-    model_pos = torch.tensor(
-        [raw_idx_to_pos[i.item()] for i in dataset_indices],
-        device=dataset_indices.device,
-        dtype=torch.long,
-    )
+    model_pos = torch.tensor([raw_idx_to_pos[i.item()] for i in dataset_indices], device=dataset_indices.device, dtype=torch.long)
     return logical_zoo_paths, model_pos
 
 
@@ -103,12 +96,7 @@ class DatasetEncoderAuxiliaryLosses:
                 return (h, w)
         raise ValueError(f"image_resize must be None, int, or 1/2-item sequence, got {image_resize!r}")
 
-    def _build_batch(
-        self,
-        dataset_indices: torch.Tensor,
-        zoo_paths: list[str],
-        device: torch.device,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def _build_batch(self, dataset_indices: torch.Tensor, zoo_paths: list[str], device: torch.device) -> tuple[torch.Tensor, torch.Tensor]:
         logical_zoo_paths, _ = collapse_batch_to_logical_datasets(dataset_indices, zoo_paths)
         image_sets = []
         labels = []
@@ -133,31 +121,19 @@ class DatasetEncoderAuxiliaryLosses:
         labels_t = torch.tensor(labels, device=device, dtype=torch.long)
         return batch, labels_t
 
-    def compute(
-        self,
-        dataset_indices: torch.Tensor,
-        zoo_paths: list[str],
-        *,
-        training: bool,
-    ) -> Dict[str, torch.Tensor]:
+    def compute(self, dataset_indices: torch.Tensor, zoo_paths: list[str], *, training: bool) -> Dict[str, torch.Tensor]:
         device = dataset_indices.device
         zero = torch.tensor(0.0, device=device)
         batch, labels = self._build_batch(dataset_indices, zoo_paths, device)
         if batch.numel() == 0:
-            return {
-                'deepsets_cls_loss': zero,
-                'deepsets_cls_acc': zero,
-            }
+            return {'deepsets_cls_loss': zero, 'deepsets_cls_acc': zero}
 
         logits = self.dataset_encoder(batch)
         cls_loss = F.cross_entropy(logits, labels)
         cls_loss = self.classification_weight * cls_loss
         acc = (logits.argmax(dim=1) == labels).float().mean() * 100.0
 
-        return {
-            'deepsets_cls_loss': cls_loss,
-            'deepsets_cls_acc': acc,
-        }
+        return {'deepsets_cls_loss': cls_loss, 'deepsets_cls_acc': acc}
 
 
 class DeepSetsClassificationLoss(nn.Module):
@@ -181,22 +157,14 @@ class DeepSetsClassificationLoss(nn.Module):
             (square), (H, W) tuple, or None.
     """
 
-    def __init__(
-        self,
-        deepsets_encoder: nn.Module,
-        weight: float = 1.0,
-        set_size: int = 32,
-        image_resize: Optional[Any] = None,
-    ):
+    def __init__(self, deepsets_encoder: nn.Module, weight: float = 1.0, set_size: int = 32, image_resize: Optional[Any] = None):
         super().__init__()
         self.deepsets_encoder = deepsets_encoder
         self.weight = weight
         self.set_size = set_size
         self.image_resize = self._parse_image_resize(image_resize)
 
-    # ------------------------------------------------------------------
     # Dataset loading helpers (mirror of DatasetAlignmentLoss)
-    # ------------------------------------------------------------------
 
     def _get_logical_dataset_name(self, zoo_path: str) -> str:
         return get_logical_dataset_name(zoo_path)
@@ -257,15 +225,9 @@ class DeepSetsClassificationLoss(nn.Module):
             images = torch.stack([dataset[i.item()][0] for i in indices])
         return self._normalize_image_batch(images).to(device)
 
-    # ------------------------------------------------------------------
     # Forward
-    # ------------------------------------------------------------------
 
-    def forward(
-        self,
-        dataset_indices: torch.Tensor,
-        zoo_paths: list,
-    ) -> Dict[str, torch.Tensor]:
+    def forward(self, dataset_indices: torch.Tensor, zoo_paths: list) -> Dict[str, torch.Tensor]:
         """Compute dataset-identity classification loss for DeepSets.
 
         Args:

@@ -49,12 +49,12 @@ from ood_utils import get_train_test_loaders
 from tans_utils import get_num_classes as get_resnet_num_classes, get_zoo_path as get_resnet_zoo_path, load_dataset_pt
 
 
-# ---- constants ------------------------------------------------------------
+# constants
 
 RESNET_METATRAIN_DATASETS = ["land-cover", "cactus-aerial", "ct-images", "lego-vs-generic", "cassava-leaf", "asl", "artworks", "blood-cells", "casting", "breakhis"]
 
 
-# ---- helpers --------------------------------------------------------------
+# helpers
 
 def set_seed(seed: int) -> None:
     random.seed(seed); np.random.seed(seed); torch.manual_seed(seed); torch.cuda.manual_seed_all(seed)
@@ -111,7 +111,7 @@ class DatasetTensorCache:
         return self._cache[key]
 
 
-# ---- hypernetwork ---------------------------------------------------------
+# hypernetwork
 
 class Text2ModelStructuredStateHyperNetwork(nn.Module):
     """EVLayer stack that maps one dataset embedding to a sparse-token state dict.
@@ -166,7 +166,7 @@ class Text2ModelStructuredStateHyperNetwork(nn.Module):
         return self._decode_token_windows(token_inputs) * self.anchor_mask_float
 
 
-# ---- dataset encoder ------------------------------------------------------
+# dataset encoder
 
 def build_dataset_encoder_for_hnet(args, device: torch.device) -> Tuple[nn.Module, Dict]:
     """DeepSets-style dataset encoder with a dataset-ID classifier head for warm-start."""

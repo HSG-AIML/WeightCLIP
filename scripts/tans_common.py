@@ -60,7 +60,7 @@ _SPLITS = {
 }
 
 
-# ---- seed & IO -------------------------------------------------------
+# seed & IO
 
 def set_seed(seed):
     random.seed(seed)
@@ -92,7 +92,7 @@ def load_torch(path):
     return torch.load(Path(path), map_location="cpu", weights_only=False)
 
 
-# ---- dataset splits --------------------------------------------------
+# dataset splits
 
 def _arch(architecture):
     return canonicalize_model_type(architecture or "cnn3")
@@ -112,7 +112,7 @@ def get_metatest_datasets(architecture=None):
     return _SPLITS[a]["metatest"]
 
 
-# ---- zoo data loading ------------------------------------------------
+# zoo data loading
 
 def get_zoo_path(dataset_name, architecture=None):
     return _get_zoo_path(dataset_name, model_type=_arch(architecture))
@@ -170,7 +170,7 @@ def _read_acc(progress_csv):
     return 0.9
 
 
-# ---- arg helpers -----------------------------------------------------
+# arg helpers
 
 def get_default_finetune_lr(arch: str) -> float:
     a = canonicalize_model_type(arch or "cnn3")
@@ -182,7 +182,7 @@ def resolve_seeds(args):
     return seeds or list(DEFAULT_TEST_SEEDS)
 
 
-# ---- reporting -------------------------------------------------------
+# reporting
 
 
 def print_single_seed_summary(results, arch, n_epochs):

@@ -117,10 +117,8 @@ class HardNegativeContrastiveLoss(nn.Module):
         max_q = sorted_query[:self.nmax, :]  # (nmax, N)
         max_m = sorted_model[:, :self.nmax]  # (N, nmax)
         
-        neg_q = torch.sum(torch.clamp(
-            max_q + (self.margin - diag).view(1, -1).expand_as(max_q), min=0))
-        neg_m = torch.sum(torch.clamp(
-            max_m + (self.margin - diag).view(-1, 1).expand_as(max_m), min=0))
+        neg_q = torch.sum(torch.clamp(max_q + (self.margin - diag).view(1, -1).expand_as(max_q), min=0))
+        neg_m = torch.sum(torch.clamp(max_m + (self.margin - diag).view(-1, 1).expand_as(max_m), min=0))
 
         if self.contrast:
             loss = neg_m + neg_q

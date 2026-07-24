@@ -32,10 +32,7 @@ class DenseTokenizer(SANETokenizer):
                 w = statedict[key]
                 if key.replace("weight", "bias") in statedict:
                     b = statedict[key.replace("weight", "bias")]
-                    w = torch.cat([
-                        w.view(statedict[key].shape[0], -1),
-                        b.unsqueeze(1)
-                        ], dim=1)
+                    w = torch.cat([w.view(statedict[key].shape[0], -1), b.unsqueeze(1)], dim=1)
                 flattened_weights.append(w.view(-1))
         return flattened_weights
 

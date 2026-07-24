@@ -29,11 +29,7 @@ class DiskCache:
         create_dirs: Whether to create cache directories if they don't exist
     """
 
-    def __init__(
-        self,
-        cache_dir: Union[str, Path],
-        create_dirs: bool = True
-    ):
+    def __init__(self, cache_dir: Union[str, Path], create_dirs: bool = True):
         self.cache_dir = Path(cache_dir).expanduser().resolve()
 
         # Create cache directory if it doesn't exist
@@ -41,11 +37,7 @@ class DiskCache:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Cache statistics
-        self._stats = {
-            'hits': 0,
-            'misses': 0,
-            'writes': 0,
-        }
+        self._stats = {'hits': 0, 'misses': 0, 'writes': 0}
 
         logger.info(f"DiskCache initialized at {self.cache_dir}")
 

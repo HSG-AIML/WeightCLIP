@@ -133,12 +133,7 @@ class DatasetPtImageSetSampler:
     def _resize_image(self, img: torch.Tensor) -> torch.Tensor:
         if (img.shape[-2], img.shape[-1]) == self.target_hw:
             return img
-        return F.interpolate(
-            img.unsqueeze(0),
-            size=self.target_hw,
-            mode="bilinear",
-            align_corners=False,
-        ).squeeze(0)
+        return F.interpolate(img.unsqueeze(0), size=self.target_hw, mode="bilinear", align_corners=False).squeeze(0)
 
     def _prepare_image(self, img: torch.Tensor) -> torch.Tensor:
         if not isinstance(img, torch.Tensor):
@@ -279,7 +274,6 @@ class ImageSetDataset(Dataset):
 
         logger.info(f"Canonical image shape set to C,H,W={self.image_shape}")
 
-    # ------------------------------------------------------------------
     def _normalize_layout(self, img: torch.Tensor) -> torch.Tensor:
         if img.ndim == 2:
             return img.unsqueeze(0)
@@ -311,12 +305,7 @@ class ImageSetDataset(Dataset):
     def _resize_image(self, img: torch.Tensor) -> torch.Tensor:
         if (img.shape[-2], img.shape[-1]) == self.target_hw:
             return img
-        return F.interpolate(
-            img.unsqueeze(0),
-            size=self.target_hw,
-            mode="bilinear",
-            align_corners=False,
-        ).squeeze(0)
+        return F.interpolate(img.unsqueeze(0), size=self.target_hw, mode="bilinear", align_corners=False).squeeze(0)
 
     def _prepare_image(self, img: torch.Tensor) -> torch.Tensor:
         if not isinstance(img, torch.Tensor):
@@ -356,7 +345,6 @@ class ImageSetDataset(Dataset):
             images.append(self._prepare_image(img))
         return images
 
-    # ------------------------------------------------------------------
     def _sample_set_size(self) -> int:
         if isinstance(self.set_size, int):
             return self.set_size

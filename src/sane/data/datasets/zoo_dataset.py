@@ -24,10 +24,7 @@ def _unwrap_state_dict(state_dict):
             break
 
     if any(key.startswith("module.") for key in state_dict):
-        state_dict = {
-            key.replace("module.", "", 1): value
-            for key, value in state_dict.items()
-        }
+        state_dict = {key.replace("module.", "", 1): value for key, value in state_dict.items()}
 
     return state_dict
 
@@ -144,10 +141,7 @@ class ZooDataset(CheckpointsDataset):
             epoch_idx = [epoch_idx]
 
         if drop_nan or max_absolute_weight is not None:
-            checkpoint_filter = WeightMagnitudeCheckpointFilter(
-                max_absolute_weight=max_absolute_weight,
-                drop_nan=drop_nan
-            )
+            checkpoint_filter = WeightMagnitudeCheckpointFilter(max_absolute_weight=max_absolute_weight, drop_nan=drop_nan)
         else:
             checkpoint_filter = None
 
@@ -168,10 +162,7 @@ class ZooDataset(CheckpointsDataset):
         model = get_model(model_config)
         model.load_state_dict(state_dict)
 
-        checkpoint = Checkpoint(
-              model
-            , metadata = {'model_config': model_config, 'eval_results': eval_results}
-        )
+        checkpoint = Checkpoint(model, metadata = {'model_config': model_config, 'eval_results': eval_results})
 
         # If we use augmentations, we return a list of augmented checkpoints
         return self.augmentations(checkpoint) if self.augmentations is not None else checkpoint

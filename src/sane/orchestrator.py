@@ -16,11 +16,7 @@ logger = logging.getLogger(__name__)
 class Orchestrator:
     """Sequences training stages and delegates execution to a Runner."""
 
-    def __init__(
-        self,
-        config: dict,
-        force_local: bool = False,
-    ) -> None:
+    def __init__(self, config: dict, force_local: bool = False) -> None:
         self._config = config
         root_dir = Path(config["root_dir"])
         experiment_dir = root_dir / config["experiment_name"]
@@ -72,10 +68,7 @@ class Orchestrator:
         OmegaConf.save(OmegaConf.create(self._config), str(config_path))
 
 
-def _build_runner(
-    config: dict[str, Any],
-    force_local: bool = False,
-):
+def _build_runner(config: dict[str, Any], force_local: bool = False):
     runner_cfg = config["runner"]
     target = _resolve_target(runner_cfg, _RUNNER_ALIASES)
 
@@ -116,9 +109,7 @@ def _build_runner(
     return runner_cls()
 
 
-# ---------------------------------------------------------------------------
 # Resolution helpers
-# ---------------------------------------------------------------------------
 
 
 def _resolve_trainer_class(cfg: dict[str, Any] | str) -> type:
@@ -165,10 +156,8 @@ def _get_class(target: str) -> type:
     return get_class(target)
 
 
-# ---------------------------------------------------------------------------
 # Alias constants – legacy short names to fully-qualified dotpaths.
 # These can be removed once all configs use ``_target_`` directly.
-# ---------------------------------------------------------------------------
 
 _TRAINER_ALIASES: dict[str, str] = {
     "SANETrainer": "sane.trainer.SANETrainer",
@@ -177,10 +166,7 @@ _TRAINER_ALIASES: dict[str, str] = {
     "SANEDummyTrainer": "sane.trainer.SANEDummyTrainer",
 }
 
-_RUNNER_ALIASES: dict[str, str] = {
-    "local": "sane.runner.local_runner.LocalRunner",
-    "ray": "sane.runner.ray_runner.RayRunner",
-}
+_RUNNER_ALIASES: dict[str, str] = {"local": "sane.runner.local_runner.LocalRunner", "ray": "sane.runner.ray_runner.RayRunner"}
 
 
 def _config_hash(config: dict[str, Any]) -> str:

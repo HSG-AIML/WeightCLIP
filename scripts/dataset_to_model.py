@@ -740,10 +740,7 @@ def run_scratch(args: argparse.Namespace) -> dict[str, object]:
         }
         _print_single_scratch_result(dataset_name, results[dataset_name], args.scratch_epochs)
 
-    return {"scratch_lrs": [float(lr) for lr in scratch_lrs],
-        "scratch_init_types": scratch_init_types,
-        "runs": runs,
-        "datasets": results}
+    return {"scratch_lrs": [float(lr) for lr in scratch_lrs], "scratch_init_types": scratch_init_types, "runs": runs, "datasets": results}
 
 
 def _print_single_dataset_result(dataset_name: str, stats: dict[str, object], finetune_epochs: int, verbose: bool = False) -> None:

@@ -77,15 +77,8 @@ class DatasetNameSplitter(Splitter):
 
         yield dataset, 0, len(dataset), getattr(dataset, "name", "dataset_0")
 
-    def split(
-        self,
-        dataset: CheckpointsDataset,
-        split_names: dict[str, Sequence[str] | None],
-    ) -> List[Subset[CheckpointsDataset] | None]:
-        normalized = {
-            split: {_normalize_dataset_identifier(name) for name in (names or [])}
-            for split, names in split_names.items()
-        }
+    def split(self, dataset: CheckpointsDataset, split_names: dict[str, Sequence[str] | None]) -> List[Subset[CheckpointsDataset] | None]:
+        normalized = {split: {_normalize_dataset_identifier(name) for name in (names or [])} for split, names in split_names.items()}
 
         overlap = (
             (normalized["train"] & normalized["val"])
@@ -93,23 +86,15 @@ class DatasetNameSplitter(Splitter):
             | (normalized["val"] & normalized["test"])
         )
         if overlap:
-            raise ValueError(
-                f"Dataset split names must be disjoint across train/val/test, got overlap: {sorted(overlap)}"
-            )
+            raise ValueError(f"Dataset split names must be disjoint across train/val/test, got overlap: {sorted(overlap)}")
 
         split_indices: dict[str, list[int]] = {"train": [], "val": [], "test": []}
         unmatched_aliases: list[tuple[str, set[str]]] = []
         for child, start, end, fallback_name in self._dataset_spans(dataset):
             aliases = self._dataset_aliases(child, fallback_name)
-            matched = [
-                split
-                for split, names in normalized.items()
-                if split != "train" and aliases & names
-            ]
+            matched = [split for split, names in normalized.items() if split != "train" and aliases & names]
             if len(matched) > 1:
-                raise ValueError(
-                    f"Dataset {fallback_name} matched multiple splits via aliases {sorted(aliases)}: {matched}"
-                )
+                raise ValueError(f"Dataset {fallback_name} matched multiple splits via aliases {sorted(aliases)}: {matched}")
 
             if matched:
                 target_split = matched[0]

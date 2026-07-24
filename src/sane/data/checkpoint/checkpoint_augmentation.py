@@ -5,18 +5,9 @@ from copy import deepcopy
 from warnings import warn
 
 from sane.data.checkpoint.checkpoint import Checkpoint
-from sane.utils.git_re_basin import (
-    PermutationSpec,
-    weight_matching,
-    apply_permutation,
-)
+from sane.utils.git_re_basin import (PermutationSpec, weight_matching, apply_permutation)
 
-__all__ = [
-    "CheckpointAugmentation",
-    "CheckpointAugmentationPipeline",
-    "PermutationAugmentation",
-    "CheckpointAligner"
-]
+__all__ = ["CheckpointAugmentation", "CheckpointAugmentationPipeline", "PermutationAugmentation", "CheckpointAligner"]
 
 class CheckpointAugmentation(nn.Module):
     """Base class for preprocessing augmentation methods.
@@ -133,9 +124,7 @@ class PermutationAugmentation(CheckpointAugmentation):
 
         # Get reference checkpoint
         # Find permutation of model to itself as reference
-        reference_permutation = weight_matching(
-            ps=self.permutation_spec, params_a=state_dict, params_b=state_dict
-        )
+        reference_permutation = weight_matching(ps=self.permutation_spec, params_a=state_dict, params_b=state_dict)
 
         # Compute random permutations
         permutation_dicts = []
@@ -153,9 +142,7 @@ class PermutationAugmentation(CheckpointAugmentation):
             # Copy reference checkpoint
             index_check = deepcopy(state_dict)
             # Apply permutation on checkpoint
-            index_check_perm = apply_permutation(
-                ps=self.permutation_spec, perm=perm_dict, params=index_check
-            )
+            index_check_perm = apply_permutation(ps=self.permutation_spec, perm=perm_dict, params=index_check)
 
             chkpt = deepcopy(checkpoint)
             chkpt.model.load_state_dict(index_check_perm)
@@ -198,9 +185,7 @@ class CheckpointAligner(CheckpointAugmentation):
         )
         
         # Apply permutation on checkpoint
-        aligned_checkpoint = apply_permutation(
-            ps=self.permutation_spec, perm=perm, params=checkpoint.model.state_dict()
-        )
+        aligned_checkpoint = apply_permutation(ps=self.permutation_spec, perm=perm, params=checkpoint.model.state_dict())
         
         out_chkpt = deepcopy(checkpoint)
         out_chkpt.model.load_state_dict(aligned_checkpoint)

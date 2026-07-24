@@ -11,11 +11,7 @@ from sane.data.checkpoint.checkpoint_augmentation import (
     CheckpointAugmentationPipeline,
     PermutationAugmentation,
 )
-from sane.data.datasets import (
-    CheckpointsDataset,
-    CombinedCheckpointsDataset,
-    ZooDataset,
-)
+from sane.data.datasets import (CheckpointsDataset, CombinedCheckpointsDataset, ZooDataset)
 from sane.data.splitter import DatasetNameSplitter, RandomSplitter
 from sane.data.tokenizers import DenseTokenizer, SparseTokenizer
 from sane.utils import git_re_basin
@@ -33,9 +29,7 @@ from sane.data.config_schema import (
 logger = logging.getLogger(__name__)
 
 
-def _ref_checkpoint(
-    dataset: CheckpointsDataset | Subset[CheckpointsDataset],
-) -> Checkpoint:
+def _ref_checkpoint(dataset: CheckpointsDataset | Subset[CheckpointsDataset]) -> Checkpoint:
     reference_checkpoint = dataset[0]
 
     if isinstance(reference_checkpoint, Checkpoint):
@@ -45,9 +39,7 @@ def _ref_checkpoint(
 
 
 class DatasetFactory:
-    def build(
-        self, config: DatasetFactoryConfig
-    ) -> tuple[DataLoader, DataLoader | None, DataLoader | None]:
+    def build(self, config: DatasetFactoryConfig) -> tuple[DataLoader, DataLoader | None, DataLoader | None]:
         checkpoints_dataset = self._load_checkpoints_dataset(config.checkpoints_dataset)
 
         # We split checkpoints and not windows. Benefit: Windows from a single checkpoint will not be distributed across multiple splits. Downside: If models are not of equal size, split ratios cannot be guararanteed.
@@ -87,14 +79,10 @@ class DatasetFactory:
         )
         return loaders
 
-    def _load_checkpoints_dataset(
-        self, config: ZooDatasetConfig | Sequence[ZooDatasetConfig]
-    ) -> CheckpointsDataset:
+    def _load_checkpoints_dataset(self, config: ZooDatasetConfig | Sequence[ZooDatasetConfig]) -> CheckpointsDataset:
         if isinstance(config, ZooDatasetConfig):
             return self._load_single_checkpoints_dataset(config)
-        return CombinedCheckpointsDataset(
-            datasets=[self._load_single_checkpoints_dataset(c) for c in config]
-        )
+        return CombinedCheckpointsDataset(datasets=[self._load_single_checkpoints_dataset(c) for c in config])
 
     def _load_single_checkpoints_dataset(self, config: ZooDatasetConfig) -> CheckpointsDataset:
         dataset = ZooDataset(
@@ -108,37 +96,21 @@ class DatasetFactory:
 
         if config.augmentations is not None:
             try:
-                dataset.augmentations = self._load_augmentations(
-                    config.augmentations, reference_checkpoint=_ref_checkpoint(dataset)
-                )
+                dataset.augmentations = self._load_augmentations(config.augmentations, reference_checkpoint=_ref_checkpoint(dataset))
             except Exception as e:
                 raise ValueError("Cannot load augmentations.") from e
 
         return dataset
 
-    def _load_augmentations(
-        self,
-        config: AugmentationConfig,
-        reference_checkpoint: Checkpoint,
-    ) -> CheckpointAugmentation | None:
+    def _load_augmentations(self, config: AugmentationConfig, reference_checkpoint: Checkpoint) -> CheckpointAugmentation | None:
 
         permutation_spec = getattr(git_re_basin, config.permutation_spec)()
         augmentations = []
 
         if config.align:
-            augmentations.append(
-                CheckpointAligner(
-                    permutation_spec=permutation_spec,
-                    reference_checkpoint=reference_checkpoint,
-                )
-            )
+            augmentations.append(CheckpointAligner(permutation_spec=permutation_spec, reference_checkpoint=reference_checkpoint))
         if config.num_permutations > 1:
-            augmentations.append(
-                PermutationAugmentation(
-                    permutation_spec=permutation_spec,
-                    num_permutations=config.num_permutations,
-                )
-            )
+            augmentations.append(PermutationAugmentation(permutation_spec=permutation_spec, num_permutations=config.num_permutations))
 
         if not augmentations:
             return None
@@ -155,11 +127,7 @@ class DatasetFactory:
             if config.train is None:
                 raise ValueError("Train split must be specified.")
 
-            active_splits = [
-                s
-                for s in [config.train, config.val, config.test]
-                if s is not None and s > 0
-            ]
+            active_splits = [s for s in [config.train, config.val, config.test] if s is not None and s > 0]
             active_names = [
                 name
                 for name, s in [
@@ -171,9 +139,7 @@ class DatasetFactory:
             ]
             splits = RandomSplitter().split(dataset, active_splits)
             split_map = dict(zip(active_names, splits))
-            full_split_map = (
-                dict(zip(["train", "val", "test"], [None, None, None])) | split_map
-            )
+            full_split_map = (dict(zip(["train", "val", "test"], [None, None, None])) | split_map)
             return tuple((k, v) for k, v in full_split_map.items())  # type: ignore
 
         if splitter_name == "DatasetNameSplitter":
@@ -185,11 +151,7 @@ class DatasetFactory:
                     "test": config.test_datasets,
                 },
             )
-            return (
-                ("train", train_subset),
-                ("val", val_subset),
-                ("test", test_subset),
-            )
+            return (("train", train_subset), ("val", val_subset), ("test", test_subset))
 
         raise ValueError(f"Unknown splitter {splitter_name!r}")
 
@@ -202,9 +164,7 @@ class DatasetFactory:
         dataset_name: str,
     ):
         checkpoints_dataset = subset
-        tokenizer = self._build_tokenizer(
-            tokenizer_config, _ref_checkpoint(checkpoints_dataset)
-        )
+        tokenizer = self._build_tokenizer(tokenizer_config, _ref_checkpoint(checkpoints_dataset))
 
         return datasets.CachedWindowedDataset(
             checkpoints_dataset=checkpoints_dataset,
@@ -226,9 +186,7 @@ class DatasetFactory:
             data_config_for_hash= config.data_config_for_hash,
         )
 
-    def _build_tokenizer(
-        self, config: TokenizerConfig, reference_checkpoint: Checkpoint
-    ):
+    def _build_tokenizer(self, config: TokenizerConfig, reference_checkpoint: Checkpoint):
         cls = {"dense": DenseTokenizer, "sparse": SparseTokenizer}[config.tokenizer_class]
         return cls(
             mode=config.mode,
@@ -255,9 +213,6 @@ class DatasetFactory:
             kwargs["prefetch_factor"] = config.prefetch_factor
 
         shuffles = [True, False, False]
-        loaders = {
-            ds.split_name: DataLoader(ds, shuffle=s, **kwargs)
-            for ds, s in zip(tokens_datasets, shuffles)
-        }
+        loaders = {ds.split_name: DataLoader(ds, shuffle=s, **kwargs) for ds, s in zip(tokens_datasets, shuffles)}
 
         return loaders.get("train"), loaders.get("val", None), loaders.get("test", None)  # type: ignore

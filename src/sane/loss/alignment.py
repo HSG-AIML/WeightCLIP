@@ -112,21 +112,14 @@ class DatasetAlignmentLoss(nn.Module):
         else:
             self.register_parameter("logit_bias", None)
         target_hw = (32, 32) if self.image_resize is None else self.image_resize
-        self.image_sampler = DatasetPtImageSetSampler(
-            split="trainset",
-            set_size=set_size,
-            target_image_size=target_hw,
-            target_channels=3,
-        )
+        self.image_sampler = DatasetPtImageSetSampler(split="trainset", set_size=set_size, target_image_size=target_hw, target_channels=3)
 
         if freeze_deepsets:
             self.deepsets_encoder.eval()
             for p in self.deepsets_encoder.parameters():
                 p.requires_grad_(False)
 
-    # ------------------------------------------------------------------
     # Dataset loading helpers
-    # ------------------------------------------------------------------
 
     def _get_logical_dataset_name(self, zoo_path: str) -> str:
         """Collapse architecture-specific zoo roots to one logical dataset name."""
@@ -173,9 +166,7 @@ class DatasetAlignmentLoss(nn.Module):
             raise TypeError(f"objective must be a string, got {type(objective).__name__}")
         objective = objective.lower()
         if objective not in {"multi_positive", "siglip"}:
-            raise ValueError(
-                f"objective must be one of ('multi_positive', 'siglip'), got {objective!r}"
-            )
+            raise ValueError(f"objective must be one of ('multi_positive', 'siglip'), got {objective!r}")
         return objective
 
     def _normalize_image_batch(self, images: torch.Tensor) -> torch.Tensor:
@@ -244,16 +235,9 @@ class DatasetAlignmentLoss(nn.Module):
         embeddings[valid_positions] = encoded
         return embeddings.detach() if self.freeze_deepsets else embeddings
 
-    # ------------------------------------------------------------------
     # Forward
-    # ------------------------------------------------------------------
 
-    def forward(
-        self,
-        sane_embeddings: torch.Tensor,
-        dataset_indices: torch.Tensor,
-        zoo_paths: list,
-    ) -> Dict[str, torch.Tensor]:
+    def forward(self, sane_embeddings: torch.Tensor, dataset_indices: torch.Tensor, zoo_paths: list) -> Dict[str, torch.Tensor]:
         """Compute bidirectional token-level alignment loss.
 
         Args:
@@ -277,9 +261,7 @@ class DatasetAlignmentLoss(nn.Module):
                 "Make both encoders use the same embedding size."
             )
 
-        # ------------------------------------------------------------------
         # 1. Collapse zoo paths to logical datasets (architecture-agnostic)
-        # ------------------------------------------------------------------
         logical_name_to_pos: Dict[str, int] = {}
         raw_idx_to_pos: Dict[int, int] = {}
         logical_zoo_paths = []
@@ -297,18 +279,10 @@ class DatasetAlignmentLoss(nn.Module):
         U = len(logical_zoo_paths)
         model_pos = torch.tensor([raw_idx_to_pos[i.item()] for i in dataset_indices], device=device, dtype=torch.long)  # [B]
 
-        # ------------------------------------------------------------------
         # 2. Encode each logical dataset -> [U, embed_dim]
-        # ------------------------------------------------------------------
-        deepsets_embs = self._encode_datasets(
-            logical_zoo_paths,
-            device,
-            dtype,
-        )
+        deepsets_embs = self._encode_datasets(logical_zoo_paths, device, dtype)
 
-        # ------------------------------------------------------------------
         # 3. Per-token bidirectional contrastive loss
-        # ------------------------------------------------------------------
         sane_flat = sane_embeddings.reshape(B * seq_len, sane_dim)
         if self.freeze_sane:
             sane_flat = sane_flat.detach()
@@ -339,8 +313,4 @@ class DatasetAlignmentLoss(nn.Module):
             best_token = logits.T.argmax(dim=1)  # [U]
             acc_bwd = (token_pos[best_token] == torch.arange(U, device=device)).float().mean() * 100.0
 
-        return {
-            'alignment_loss': total_loss,
-            'alignment_acc_fwd': acc_fwd.item(),
-            'alignment_acc_bwd': acc_bwd.item(),
-        }
+        return {'alignment_loss': total_loss, 'alignment_acc_fwd': acc_fwd.item(), 'alignment_acc_bwd': acc_bwd.item()}

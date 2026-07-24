@@ -96,11 +96,7 @@ def parseCheckpointInfo(root_dir:str, epoch_idx:List[int], checkpoint_filter: Op
 
         epoch_ckpt_list.sort(key=epoch_key)
         available_epochs = [epoch_number(path) for path in epoch_ckpt_list]
-        epoch_to_path = {
-            epoch: path
-            for path in epoch_ckpt_list
-            if (epoch := epoch_number(path)) is not None
-        }
+        epoch_to_path = {epoch: path for path in epoch_ckpt_list if (epoch := epoch_number(path)) is not None}
 
         for e in epoch_idx:
             if e >= 0 and e in epoch_to_path:

@@ -64,11 +64,7 @@ class RayRunner:
         resume_from_checkpoint: Path | None = None,
     ) -> RunResult:
         we_initialized = not ray.is_initialized()
-        ray.init(
-            num_cpus=self._num_cpus,
-            num_gpus=self._num_gpus,
-            ignore_reinit_error=True,
-        )
+        ray.init(num_cpus=self._num_cpus, num_gpus=self._num_gpus, ignore_reinit_error=True)
         if we_initialized:
             logger.info("Ray initialized: %s", ray.cluster_resources())
 
@@ -115,16 +111,8 @@ class RayRunner:
             )
             trainable = tune.with_resources(train_func, resources={"cpu": 1})
         else:
-            train_func = _make_trainable(
-                trainer_class,
-                epochs,
-                checkpoint_frequency,
-                resume_from_checkpoint=resume_from_checkpoint,
-            )
-            trainable = tune.with_resources(
-                train_func,
-                resources={"cpu": self._cpus_per_trial, "gpu": self._gpus_per_trial},
-            )
+            train_func = _make_trainable(trainer_class, epochs, checkpoint_frequency, resume_from_checkpoint=resume_from_checkpoint)
+            trainable = tune.with_resources(train_func, resources={"cpu": self._cpus_per_trial, "gpu": self._gpus_per_trial})
 
         experiment_name = config["experiment_name"]
 
@@ -164,19 +152,10 @@ class RayRunner:
         best_config = best.config or config
         best_metrics = dict(best.metrics) if best.metrics else {}
 
-        return RunResult(
-            checkpoint_path=checkpoint_path,
-            config=best_config,
-            metrics=best_metrics,
-        )
+        return RunResult(checkpoint_path=checkpoint_path, config=best_config, metrics=best_metrics)
 
 
-def _make_trainable(
-    trainer_class: type,
-    epochs: int,
-    checkpoint_frequency: int,
-    resume_from_checkpoint: Path | None = None,
-):
+def _make_trainable(trainer_class: type, epochs: int, checkpoint_frequency: int, resume_from_checkpoint: Path | None = None):
     """Build a Ray Tune function trainable that wraps a plain trainer."""
 
     resume_path = str(resume_from_checkpoint) if resume_from_checkpoint is not None else None
@@ -207,17 +186,12 @@ def _make_trainable(
         for epoch in range(start_epoch, epochs + 1):
             metrics = trainer.step()
 
-            should_checkpoint = (
-                checkpoint_frequency > 0 and epoch % checkpoint_frequency == 0
-            ) or epoch == epochs
+            should_checkpoint = (checkpoint_frequency > 0 and epoch % checkpoint_frequency == 0) or epoch == epochs
 
             if should_checkpoint:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     trainer.save_checkpoint(tmpdir)
-                    tune.report(
-                        metrics=metrics,
-                        checkpoint=TuneCheckpoint.from_directory(tmpdir),
-                    )
+                    tune.report(metrics=metrics, checkpoint=TuneCheckpoint.from_directory(tmpdir))
             else:
                 tune.report(metrics=metrics)
 
@@ -235,11 +209,7 @@ def _make_distributed_trainable(
 ):
     """Build a Ray Tune driver that launches a Ray Train TorchTrainer."""
 
-    worker_loop = _make_distributed_worker_loop(
-        trainer_class=trainer_class,
-        epochs=epochs,
-        checkpoint_frequency=checkpoint_frequency,
-    )
+    worker_loop = _make_distributed_worker_loop(trainer_class=trainer_class, epochs=epochs, checkpoint_frequency=checkpoint_frequency)
 
     resume_path_str = str(resume_from_checkpoint) if resume_from_checkpoint is not None else None
 
@@ -254,10 +224,7 @@ def _make_distributed_trainable(
         resume_checkpoint = None
         if resume_path_str is not None:
             resume_checkpoint = ray_train.Checkpoint.from_directory(resume_path_str)
-            logger.info(
-                "Wrapping TorchTrainer with resume_from_checkpoint=%s",
-                resume_path_str,
-            )
+            logger.info("Wrapping TorchTrainer with resume_from_checkpoint=%s", resume_path_str)
 
         trainer = ray_train_torch.TorchTrainer(
             train_loop_per_worker=worker_loop,
@@ -284,11 +251,7 @@ def _make_distributed_trainable(
     return train_driver
 
 
-def _make_distributed_worker_loop(
-    trainer_class: type,
-    epochs: int,
-    checkpoint_frequency: int,
-):
+def _make_distributed_worker_loop(trainer_class: type, epochs: int, checkpoint_frequency: int):
     """Build the per-worker Ray Train loop for AE-only DDP training."""
 
     class DistributedTrainer(trainer_class):
@@ -296,24 +259,15 @@ def _make_distributed_worker_loop(
             worker_config = _configure_distributed_worker_config(config)
             super().setup(worker_config)
 
-            find_unused_parameters = _requires_ddp_unused_parameter_detection(
-                worker_config
-            )
+            find_unused_parameters = _requires_ddp_unused_parameter_detection(worker_config)
             if find_unused_parameters:
                 logger.warning(
                     "Enabling DDP find_unused_parameters because the configured "
                     "loss disables the contrastive projector branch."
                 )
 
-            ddp_kwargs = (
-                {"find_unused_parameters": True}
-                if find_unused_parameters
-                else None
-            )
-            self.sane_ae = ray_train_torch.prepare_model(
-                self.sane_ae,
-                parallel_strategy_kwargs=ddp_kwargs,
-            )
+            ddp_kwargs = ({"find_unused_parameters": True} if find_unused_parameters else None)
+            self.sane_ae = ray_train_torch.prepare_model(self.sane_ae, parallel_strategy_kwargs=ddp_kwargs)
             self.trainloader = ray_train_torch.prepare_data_loader(self.trainloader)
             if self.valloader is not None:
                 self.valloader = ray_train_torch.prepare_data_loader(self.valloader)
@@ -353,17 +307,12 @@ def _make_distributed_worker_loop(
             metrics = trainer.step()
             report_metrics = _synchronize_report_metrics(metrics)
 
-            should_checkpoint = (
-                checkpoint_frequency > 0 and epoch % checkpoint_frequency == 0
-            ) or epoch == epochs
+            should_checkpoint = (checkpoint_frequency > 0 and epoch % checkpoint_frequency == 0) or epoch == epochs
 
             if should_checkpoint and _distributed_rank() == 0:
                 with tempfile.TemporaryDirectory() as tmpdir:
                     trainer.save_checkpoint(tmpdir)
-                    ray_train.report(
-                        metrics=report_metrics,
-                        checkpoint=ray_train.Checkpoint.from_directory(tmpdir),
-                    )
+                    ray_train.report(metrics=report_metrics, checkpoint=ray_train.Checkpoint.from_directory(tmpdir))
             else:
                 ray_train.report(metrics=report_metrics)
 
@@ -387,9 +336,7 @@ def _strip_distributed_only_config(config: dict[str, Any]) -> dict[str, Any]:
     """Drop unsupported features from the distributed config."""
     stripped = copy.deepcopy(config)
     if stripped.get("downstream_tasks"):
-        logger.warning(
-            "Distributed Ray Train runs ignore downstream_tasks; clearing them."
-        )
+        logger.warning("Distributed Ray Train runs ignore downstream_tasks; clearing them.")
     stripped["downstream_tasks"] = []
     return stripped
 

@@ -65,9 +65,7 @@ class WindowedDataset(Dataset):
         **kwargs,
     ):
         if kwargs:
-            logger.debug(
-                f"{type(self).__name__} received unknown kwargs (ignored): {list(kwargs)}"
-            )
+            logger.debug(f"{type(self).__name__} received unknown kwargs (ignored): {list(kwargs)}")
 
         self.checkpoints_dataset: CheckpointsDataset = checkpoints_dataset
         self.tokenizer: SANETokenizer = tokenizer
@@ -80,9 +78,7 @@ class WindowedDataset(Dataset):
         self.max_sequence_length: int | None = None
         self.allow_overlapping_windows: bool = allow_overlapping_windows
         self.include_zoo_metadata: bool = include_zoo_metadata
-        self.window_distribution_strategy: Literal["consecutive", "distributed"] = (
-            window_distribution_strategy
-        )
+        self.window_distribution_strategy: Literal["consecutive", "distributed"] = (window_distribution_strategy)
         self._checkpoint_zoo_root_dirs: List[str | None] | None = None
 
         if num_windows_per_layer is not None and num_windows_per_model != "auto":
@@ -122,9 +118,7 @@ class WindowedDataset(Dataset):
 
     def __getitem__(self, index: int) -> Window:
         checkpoint_idx, window_idx = self._map_index(index)
-        window = self._pad_to_max_length_if_needed(
-            self._get_window(checkpoint_idx, window_idx)
-        )
+        window = self._pad_to_max_length_if_needed(self._get_window(checkpoint_idx, window_idx))
         if not self.include_zoo_metadata:
             return window
 
@@ -142,35 +136,20 @@ class WindowedDataset(Dataset):
 
     def __getmodel__(self, index: int) -> List[Window]:
         if index >= len(self.checkpoints_dataset):
-            raise IndexError(
-                f"Checkpoint index {index} out of range for dataset of size "
-                f"{len(self.checkpoints_dataset)}"
-            )
-        return [
-            self._pad_to_max_length_if_needed(window)
-            for window in self._get_all_windows(index)
-        ]
+            raise IndexError(f"Checkpoint index {index} out of range for dataset of size " f"{len(self.checkpoints_dataset)}")
+        return [self._pad_to_max_length_if_needed(window) for window in self._get_all_windows(index)]
 
     def _map_index(self, index: int) -> Tuple[int, int]:
         if index >= len(self):
-            raise IndexError(
-                f"Index {index} out of range for dataset of size {len(self)}"
-            )
+            raise IndexError(f"Index {index} out of range for dataset of size {len(self)}")
         return divmod(index, self._windows_per_checkpoint)
 
     def _resolve_zoo_root_dir(self, checkpoint_idx: int) -> str | None:
         return self._resolve_zoo_root_dir_from_dataset(self.checkpoints_dataset, checkpoint_idx)
 
-    def _resolve_zoo_root_dir_from_dataset(
-        self,
-        dataset: Dataset,
-        checkpoint_idx: int,
-    ) -> str | None:
+    def _resolve_zoo_root_dir_from_dataset(self, dataset: Dataset, checkpoint_idx: int) -> str | None:
         if isinstance(dataset, Subset):
-            return self._resolve_zoo_root_dir_from_dataset(
-                dataset.dataset,
-                int(dataset.indices[checkpoint_idx]),
-            )
+            return self._resolve_zoo_root_dir_from_dataset(dataset.dataset, int(dataset.indices[checkpoint_idx]))
 
         root_dir = getattr(dataset, "root_dir", None)
         if root_dir is not None:
@@ -192,9 +171,7 @@ class WindowedDataset(Dataset):
 
             return self._resolve_zoo_root_dir_from_dataset(datasets[dataset_idx], local_index)
 
-        raise ValueError(
-            f"Cannot resolve zoo_root_dir for dataset type {type(dataset).__name__}"
-        )
+        raise ValueError(f"Cannot resolve zoo_root_dir for dataset type {type(dataset).__name__}")
 
     def _generate_windows(self, checkpoint_idx: int) -> List[Window]:
         """Load a checkpoint (handling augmentation views) and return all windows."""
@@ -205,16 +182,10 @@ class WindowedDataset(Dataset):
             return self._tokenize_checkpoint(checkpoints)
 
         # augmentations: tokenize all variations
-        tokenized_checkpoints = [
-            self._tokenize_checkpoint(ckpt) for ckpt in checkpoints
-        ]
+        tokenized_checkpoints = [self._tokenize_checkpoint(ckpt) for ckpt in checkpoints]
 
-        if not all(
-            len(tc) == len(tokenized_checkpoints[0]) for tc in tokenized_checkpoints
-        ):
-            raise ValueError(
-                "All augmentation views must produce the same number of windows."
-            )
+        if not all(len(tc) == len(tokenized_checkpoints[0]) for tc in tokenized_checkpoints):
+            raise ValueError("All augmentation views must produce the same number of windows.")
 
         return [
             tuple(torch.stack(tensors, dim=0) for tensors in zip(*windows))
@@ -233,11 +204,7 @@ class WindowedDataset(Dataset):
         return self._extract_windows_from_layers(layer_data)
 
     def _infer_max_sequence_length(self) -> int:
-        logger.info(
-            "Inferred max sequence length %d for %s",
-            self.window_size,
-            type(self).__name__,
-        )
+        logger.info("Inferred max sequence length %d for %s", self.window_size, type(self).__name__)
         return self.window_size
 
     def _get_sample_layer_data(self) -> list[Window]:
@@ -250,61 +217,38 @@ class WindowedDataset(Dataset):
             checkpoint = checkpoint[0]
 
         tokenized_result = self.tokenizer.tokenize(checkpoint.model.state_dict())
-        return (
-            [tokenized_result]
-            if isinstance(tokenized_result, tuple)
-            else tokenized_result
-        )
+        return ([tokenized_result] if isinstance(tokenized_result, tuple) else tokenized_result)
 
     def _calculate_windows_per_checkpoint(self) -> int:
         """Return the number of windows produced per checkpoint."""
-        if (
-            isinstance(self.num_windows_per_model, int)
-            and self.num_windows_per_layer is None
-        ):
+        if (isinstance(self.num_windows_per_model, int) and self.num_windows_per_layer is None):
             return self.num_windows_per_model
 
         layer_data = self._get_sample_layer_data()
         windows = self._extract_windows_from_layers(layer_data)
         total = len(windows)
-        logger.info(
-            f"Estimated windows per checkpoint: {total} (from {len(layer_data)} layers)"
-        )
+        logger.info(f"Estimated windows per checkpoint: {total} (from {len(layer_data)} layers)")
         return total
 
-    def _extract_windows_from_layers(
-        self,
-        layer_data: List[Window],
-    ) -> List[Window]:
+    def _extract_windows_from_layers(self, layer_data: List[Window]) -> List[Window]:
         if self.num_windows_per_layer is not None:
             return self._apply_per_layer_windowing_to_layers(layer_data)
         return self._apply_regular_windowing_to_layers(layer_data)
 
-    def _apply_regular_windowing_to_layers(
-        self,
-        layer_data: List[Window],
-    ) -> List[Window]:
+    def _apply_regular_windowing_to_layers(self, layer_data: List[Window]) -> List[Window]:
         if self.num_windows_per_model == "auto":
             windows = []
             for layer_tokens, layer_mask, layer_position in layer_data:
                 layer_length = layer_tokens.shape[0]
                 if self.pad_windows:
-                    n = max(
-                        1, (layer_length + self.window_size - 1) // self.window_size
-                    )
+                    n = max(1, (layer_length + self.window_size - 1) // self.window_size)
                 else:
                     n = max(1, layer_length // self.window_size)
-                windows.extend(
-                    self._sample_windows_from_layer(
-                        layer_tokens, layer_mask, layer_position, n
-                    )
-                )
+                windows.extend(self._sample_windows_from_layer(layer_tokens, layer_mask, layer_position, n))
             return windows
 
         if not isinstance(self.num_windows_per_model, int):
-            raise ValueError(
-                f"Expected int for num_windows_per_model, got {type(self.num_windows_per_model)}"
-            )
+            raise ValueError(f"Expected int for num_windows_per_model, got {type(self.num_windows_per_model)}")
 
         total_tokens = sum(t.shape[0] for t, _, _ in layer_data)
         windows = []
@@ -315,43 +259,24 @@ class WindowedDataset(Dataset):
                 layer_windows = remaining
             else:
                 proportion = layer_tokens.shape[0] / total_tokens
-                layer_windows = min(
-                    max(1, int(self.num_windows_per_model * proportion)),
-                    remaining,
-                )
+                layer_windows = min(max(1, int(self.num_windows_per_model * proportion)), remaining)
 
             if layer_windows > 0:
-                windows.extend(
-                    self._sample_windows_from_layer(
-                        layer_tokens, layer_mask, layer_position, layer_windows
-                    )
-                )
+                windows.extend(self._sample_windows_from_layer(layer_tokens, layer_mask, layer_position, layer_windows))
                 remaining -= layer_windows
 
             if remaining <= 0:
                 break
 
         if len(windows) < self.num_windows_per_model:
-            logger.warning(
-                f"Requested {self.num_windows_per_model} windows but only {len(windows)} could be sampled."
-            )
+            logger.warning(f"Requested {self.num_windows_per_model} windows but only {len(windows)} could be sampled.")
 
         return windows
 
-    def _apply_per_layer_windowing_to_layers(
-        self,
-        layer_data: List[Window],
-    ) -> List[Window]:
+    def _apply_per_layer_windowing_to_layers(self, layer_data: List[Window]) -> List[Window]:
         windows = []
         for layer_tokens, layer_mask, layer_position in layer_data:
-            windows.extend(
-                self._sample_windows_from_layer(
-                    layer_tokens,
-                    layer_mask,
-                    layer_position,
-                    self.num_windows_per_layer or 1,
-                )
-            )
+            windows.extend(self._sample_windows_from_layer(layer_tokens, layer_mask, layer_position, self.num_windows_per_layer or 1))
         return windows
 
     def _sample_windows_from_layer(
@@ -365,25 +290,15 @@ class WindowedDataset(Dataset):
         windows = []
 
         if layer_length <= self.window_size:
-            windows.append(
-                self._pad_window_if_needed((layer_tokens, layer_mask, layer_position))
-            )
+            windows.append(self._pad_window_if_needed((layer_tokens, layer_mask, layer_position)))
         else:
             for start in self._get_window_starts(layer_length, num_windows):
                 end = min(start + self.window_size, layer_length)
-                window = (
-                    layer_tokens[start:end],
-                    layer_mask[start:end],
-                    layer_position[start:end].clone(),
-                )
+                window = (layer_tokens[start:end], layer_mask[start:end], layer_position[start:end].clone())
                 windows.append(self._pad_window_if_needed(window))
 
         if len(windows) != num_windows:
-            size_desc = (
-                f"of size {self.window_size}"
-                if self.pad_windows
-                else f"of size ≤{self.window_size}"
-            )
+            size_desc = (f"of size {self.window_size}" if self.pad_windows else f"of size ≤{self.window_size}")
             logger.warning(
                 f"Requested {num_windows} windows but only {len(windows)} {size_desc} "
                 f"could be sampled from layer of length {layer_length}."
@@ -391,10 +306,7 @@ class WindowedDataset(Dataset):
 
         return windows
 
-    def _pad_window_if_needed(
-        self,
-        window_tuple: Window,
-    ) -> Window:
+    def _pad_window_if_needed(self, window_tuple: Window) -> Window:
         if not self.pad_windows:
             return window_tuple
         return self._pad_window_to_length(window_tuple, self.window_size)
@@ -422,9 +334,7 @@ class WindowedDataset(Dataset):
                 torch.stack(list(padded_position), dim=0),
             )
 
-        raise ValueError(
-            f"Expected tokens/mask/position with 2 or 3 dims, got {tokens.ndim}, {mask.ndim}, {position.ndim}."
-        )
+        raise ValueError(f"Expected tokens/mask/position with 2 or 3 dims, got {tokens.ndim}, {mask.ndim}, {position.ndim}.")
 
     def _pad_single_sequence_to_length(
         self,
@@ -438,34 +348,22 @@ class WindowedDataset(Dataset):
             return tokens, mask, position
 
         pad = target_length - current_length
-        pad_tokens = torch.zeros(
-            (pad, self.tokensize), dtype=tokens.dtype, device=tokens.device
-        )
-        pad_mask = torch.zeros(
-            (pad, self.tokensize), dtype=torch.bool, device=mask.device
-        )
+        pad_tokens = torch.zeros((pad, self.tokensize), dtype=tokens.dtype, device=tokens.device)
+        pad_mask = torch.zeros((pad, self.tokensize), dtype=torch.bool, device=mask.device)
 
         if current_length > 0:
             last = position[-1]
             steps = torch.arange(1, pad + 1, dtype=position.dtype, device=position.device)
-            pad_position = torch.zeros(
-                (pad, position.shape[-1]), dtype=position.dtype, device=position.device
-            )
+            pad_position = torch.zeros((pad, position.shape[-1]), dtype=position.dtype, device=position.device)
             pad_position[:, 0] = last[0] + steps
             if position.shape[-1] > 1:
                 pad_position[:, 1] = last[1]
             if position.shape[-1] > 2:
                 pad_position[:, 2] = last[2] + steps
         else:
-            pad_position = torch.zeros(
-                (pad, position.shape[-1]), dtype=position.dtype, device=position.device
-            )
+            pad_position = torch.zeros((pad, position.shape[-1]), dtype=position.dtype, device=position.device)
 
-        return (
-            torch.cat([tokens, pad_tokens], dim=0),
-            torch.cat([mask, pad_mask], dim=0),
-            torch.cat([position, pad_position], dim=0),
-        )
+        return (torch.cat([tokens, pad_tokens], dim=0), torch.cat([mask, pad_mask], dim=0), torch.cat([position, pad_position], dim=0))
 
     def _get_window_starts(self, total_tokens: int, num_windows: int) -> List[int]:
         if total_tokens <= self.window_size:
@@ -480,9 +378,7 @@ class WindowedDataset(Dataset):
 
         if not self.allow_overlapping_windows:
             if self.pad_windows:
-                max_non_overlapping = (
-                    total_tokens + self.window_size - 1
-                ) // self.window_size
+                max_non_overlapping = (total_tokens + self.window_size - 1) // self.window_size
             else:
                 max_non_overlapping = (max_start // self.window_size) + 1
             actual = min(num_windows, max_non_overlapping)
@@ -507,9 +403,7 @@ class WindowedDataset(Dataset):
         starts: List[int] = torch.randperm(max_start + 1)[:num_windows].tolist()
         return sorted(starts)
 
-    def _get_distributed_window_starts(
-        self, total_tokens: int, num_windows: int
-    ) -> List[int]:
+    def _get_distributed_window_starts(self, total_tokens: int, num_windows: int) -> List[int]:
         if num_windows <= 1:
             return [0]
 

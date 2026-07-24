@@ -78,9 +78,7 @@ class SANETokenizer(nn.Module, ABC):
         pos = torch.cat([p for (_, _, p) in layerwise], dim=0)
         return tokens, mask, pos
 
-    def detokenize(
-        self, tokens_input, mask=None, position=None, reference_statedict=None
-    ) -> StateDict:
+    def detokenize(self, tokens_input, mask=None, position=None, reference_statedict=None) -> StateDict:
         """Detokenizes the input tokens by unslicing and rebuilding the state dictionary.
 
         Args:
@@ -145,11 +143,7 @@ class SANETokenizer(nn.Module, ABC):
             std_per_token = w.std(dim=-1, keepdim=True, unbiased=False)
 
             # Sample Gaussian noise and concatenate with original tensor
-            gaussian_padding = (
-                torch.randn(*w.shape[:-1], pad_right, device=w.device, dtype=w.dtype)
-                * std_per_token
-                + mean_per_token
-            )
+            gaussian_padding = (torch.randn(*w.shape[:-1], pad_right, device=w.device, dtype=w.dtype) * std_per_token + mean_per_token)
             w_pad = torch.cat([w, gaussian_padding], dim=-1)
 
         elif self.padding in ("reflect", "replicate", "circular"):
@@ -183,12 +177,8 @@ class SANETokenizer(nn.Module, ABC):
     @abstractmethod
     def flatten(self, statedict: StateDict) -> List[torch.Tensor]: ...
     @abstractmethod
-    def slice_by_layers(
-        self, flattened_weights
-    ) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]: ...
+    def slice_by_layers(self, flattened_weights) -> List[Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]: ...
     @abstractmethod
     def unslice(self, tokens_input, mask=None, position=None) -> List[torch.Tensor]: ...
     @abstractmethod
-    def rebuild_state_dict(
-        self, flattened_weights, reference_statedict=None
-    ) -> StateDict: ...
+    def rebuild_state_dict(self, flattened_weights, reference_statedict=None) -> StateDict: ...

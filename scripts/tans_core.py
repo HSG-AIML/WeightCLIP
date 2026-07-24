@@ -21,7 +21,7 @@ from sane.data.datasets.zoo_dataset_models import ResNet18Slim
 from tans_common import load_dataset_pt
 
 
-# ---- loss & metrics --------------------------------------------------
+# loss & metrics
 
 class HardNegativeContrastiveLoss(nn.Module):
     def __init__(self, nmax=20, margin=0.2):
@@ -46,15 +46,12 @@ def compute_recall(q_embs, m_embs):
     if isinstance(m_embs, torch.Tensor):
         m_embs = m_embs.detach().cpu().numpy()
     n = q_embs.shape[0]
-    ranks = np.array([
-        np.where(np.argsort(np.dot(q_embs[i : i + 1], m_embs.T).flatten())[::-1] == i)[0][0]
-        for i in range(n)
-    ])
+    ranks = np.array([np.where(np.argsort(np.dot(q_embs[i : i + 1], m_embs.T).flatten())[::-1] == i)[0][0] for i in range(n)])
     recalls = {k: 100.0 * (ranks < k).mean() for k in [1, 5, 10, 50, 100]}
     return recalls, float(np.median(ranks) + 1), float(ranks.mean() + 1)
 
 
-# ---- encoders --------------------------------------------------------
+# encoders
 
 class QueryEncoder(nn.Module):
     def __init__(self, n_dims=128, input_dim=512):
@@ -86,7 +83,7 @@ class PerformancePredictor(nn.Module):
         return torch.sigmoid(self.fc(torch.cat([q_embs, m_embs], dim=1)))
 
 
-# ---- functional embeddings -------------------------------------------
+# functional embeddings
 
 class FunctionalEmbeddingGenerator:
     def __init__(self, n_noise_samples=16, device="cuda", seed=42, architecture=None):

@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 class SANETrainer:
 
-    # ----------------------------------- Setup methods ---------------------------------- #
+    # Setup methods
 
     def __init__(self) -> None:
         pass
@@ -280,7 +280,7 @@ class SANETrainer:
 
             self.downstream_tasks.append(dstk)
 
-    # ----------------------------------- Loading data ----------------------------------- #
+    # Loading data
 
     def _load_data(self):
         # This loading can be improved using OmegaConf directly.
@@ -323,7 +323,7 @@ class SANETrainer:
             aug_cfg = from_dict(AugmentationConfig, aug_cfg)
         return from_dict(ZooDatasetConfig, cfg, augmentations=aug_cfg)
 
-    # --------------------------------- Inferring values --------------------------------- #
+    # Inferring values
 
     def _get_n_tokens(self) -> int:
         """Returns the number of input tokens, usually equivalent to the window size.
@@ -390,7 +390,7 @@ class SANETrainer:
             raise ValueError(f"scheduler_epochs must be a positive integer, got {scheduler_epochs!r}")
         return scheduler_epochs * len(self.trainloader)
 
-    # ----------------------------------- Step methods ----------------------------------- #
+    # Step methods
 
     def step(self) -> Dict[str, Any]:
         """Performs a complete iteration step, including training, validation (if scheduled), downstream tasks, and memory monitoring.
@@ -676,14 +676,11 @@ class SANETrainer:
             }
 
         # Combine all memory usage information
-        memory_usage = {
-            'cpu_memory_usage': cpu_mem_usage,
-            'cuda_memory_usage': cuda_mem_usage,
-        }
+        memory_usage = {'cpu_memory_usage': cpu_mem_usage, 'cuda_memory_usage': cuda_mem_usage}
 
         return memory_usage
 
-    # -------------------------------- Save & Load methods ------------------------------- #
+    # Save & Load methods
 
     def save_checkpoint(self, checkpoint_dir: str) -> None:
         checkpoint_dir = Path(checkpoint_dir)

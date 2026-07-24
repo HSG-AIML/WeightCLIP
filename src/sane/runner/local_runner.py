@@ -80,11 +80,7 @@ class LocalRunner:
                     trainer.save_checkpoint(str(ckpt_dir))
 
             final_ckpt_path = trial_dir / f"checkpoint_{epochs:06d}"
-            return RunResult(
-                checkpoint_path=final_ckpt_path,
-                config=config,
-                metrics=metrics,
-            )
+            return RunResult(checkpoint_path=final_ckpt_path, config=config, metrics=metrics)
 
         finally:
             logger.finish()
@@ -110,9 +106,7 @@ def _save_trial_configs(config: dict[str, Any], trial_dir: Path) -> None:
     from omegaconf import OmegaConf
 
     OmegaConf.save(OmegaConf.create(config), str(trial_dir / "config.yaml"))
-    (trial_dir / "config.json").write_text(
-        json.dumps(config, indent=2, default=str)
-    )
+    (trial_dir / "config.json").write_text(json.dumps(config, indent=2, default=str))
 
 
 def _build_default_logger(log_dir: Path) -> MetricsLogger:
@@ -125,9 +119,7 @@ def _to_none(x: Any) -> Any:
     return None if x in ("none", "None") else x
 
 
-def _collect_grid_entries(
-    node: Any, prefix: tuple[str, ...] = ()
-) -> list[tuple[tuple[str, ...], list[Any]]]:
+def _collect_grid_entries(node: Any, prefix: tuple[str, ...] = ()) -> list[tuple[tuple[str, ...], list[Any]]]:
     """Walk config recursively, collecting (path, values) for each grid spec."""
     entries: list[tuple[tuple[str, ...], list[Any]]] = []
     if isinstance(node, Mapping) and len(node) == 1 and next(iter(node)) == "grid":

@@ -9,10 +9,7 @@ import torch
 from torch.amp import autocast
 
 from sane.loss.alignment import DatasetAlignmentLoss
-from sane.loss.deepsets_classification import (
-    DatasetEncoderAuxiliaryLosses,
-    build_logical_dataset_registry,
-)
+from sane.loss.deepsets_classification import (DatasetEncoderAuxiliaryLosses, build_logical_dataset_registry)
 from sane.model import build_dataset_encoder
 from sane.model.dataset_encoder import ENCODER_PRESETS
 from sane.trainer.contrastive_trainer import SANEContrastiveTrainer
@@ -68,10 +65,7 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
                 position = data["position"]
                 if position.dim() == 4:
                     position = position[:, 0]
-                batch_max_pos = torch.amax(
-                    position,
-                    dim=tuple(range(position.ndim - 1)),
-                ).int().tolist()
+                batch_max_pos = torch.amax(position, dim=tuple(range(position.ndim - 1))).int().tolist()
                 if max_pos is None:
                     max_pos = batch_max_pos
                 else:
@@ -89,9 +83,7 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
     def _setup_dataset_encoder_stack(self) -> None:
         dataset_encoder_cfg = copy.deepcopy(self.config.get("dataset_encoder", {}))
         if not dataset_encoder_cfg:
-            raise ValueError(
-                "Joint alignment training requires a top-level 'dataset_encoder' config block."
-            )
+            raise ValueError("Joint alignment training requires a top-level 'dataset_encoder' config block.")
 
         preset = dataset_encoder_cfg.pop("preset", None)
         model_cfg: Dict[str, Any] = {}
@@ -113,12 +105,8 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
         self.dataset_encoder_image_size = tuple(image_size)
         self.dataset_encoder_input_channels = input_channels
         self.dataset_encoder_set_size = int(dataset_encoder_cfg.pop("set_size", 32))
-        self.dataset_encoder_classification_weight = float(
-            dataset_encoder_cfg.pop("classification_weight", 0.0)
-        )
-        self.dataset_encoder_classification_weight_anneal_epochs = int(
-            dataset_encoder_cfg.pop("classification_weight_anneal_epochs", 0)
-        )
+        self.dataset_encoder_classification_weight = float(dataset_encoder_cfg.pop("classification_weight", 0.0))
+        self.dataset_encoder_classification_weight_anneal_epochs = int(dataset_encoder_cfg.pop("classification_weight_anneal_epochs", 0))
 
         model_cfg.update(dataset_encoder_cfg)
         model_cfg.setdefault("input_channels", input_channels)
@@ -187,16 +175,10 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
             ])
         else:
             sane_decay, sane_nodecay = self._collect_param_groups(self.sane_ae)
-            optim_groups.extend([
-                {"params": sane_decay},
-                {"params": sane_nodecay, "weight_decay": 0.0},
-            ])
+            optim_groups.extend([{"params": sane_decay}, {"params": sane_nodecay, "weight_decay": 0.0}])
 
         ds_decay, ds_nodecay = self._collect_param_groups(self.dataset_encoder)
-        optim_groups.extend([
-            {"params": ds_decay},
-            {"params": ds_nodecay, "weight_decay": 0.0},
-        ])
+        optim_groups.extend([{"params": ds_decay}, {"params": ds_nodecay, "weight_decay": 0.0}])
 
         alignment_decay, alignment_nodecay = self._collect_param_groups(self.alignment_loss_fn, recurse=False)
         if alignment_decay:
@@ -297,9 +279,7 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
             tokens_align, mask_align, position_align = tokens, mask, position
             transform_first = training and not self.view_1_canon_train
         else:
-            raise ValueError(
-                f"Tokens must have 3 or 4 dimensions, got shape {tuple(tokens.shape)}."
-            )
+            raise ValueError(f"Tokens must have 3 or 4 dimensions, got shape {tuple(tokens.shape)}.")
 
         if transform_first:
             tokens_i = self._transform_tokens(tokens_i)
@@ -330,17 +310,9 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
     ) -> Dict[str, torch.Tensor]:
         if self.alignment_loss_fn.weight <= 0:
             zero = torch.tensor(0.0, device=self.device)
-            return {
-                "alignment_loss": zero,
-                "alignment_acc_fwd": zero,
-                "alignment_acc_bwd": zero,
-            }
+            return {"alignment_loss": zero, "alignment_acc_fwd": zero, "alignment_acc_bwd": zero}
 
-        out = self.alignment_loss_fn(
-            sane_embeddings,
-            dataset_indices,
-            zoo_paths,
-        )
+        out = self.alignment_loss_fn(sane_embeddings, dataset_indices, zoo_paths)
         return {
             "alignment_loss": out["alignment_loss"],
             "alignment_acc_fwd": torch.tensor(out["alignment_acc_fwd"], device=self.device),
@@ -365,11 +337,7 @@ class SANEJointAlignmentTrainer(SANEContrastiveTrainer):
         alignment_metrics = self._compute_alignment(alignment_z, dataset_indices, zoo_paths, training=training)
         aux_metrics = self.dataset_encoder_aux.compute(dataset_indices, zoo_paths, training=training)
 
-        total = (
-            sane_loss["loss"]
-            + alignment_metrics["alignment_loss"]
-            + aux_metrics["deepsets_cls_loss"]
-        )
+        total = (sane_loss["loss"] + alignment_metrics["alignment_loss"] + aux_metrics["deepsets_cls_loss"])
 
         metrics = dict(sane_loss)
         metrics["loss_sane"] = sane_loss["loss"]

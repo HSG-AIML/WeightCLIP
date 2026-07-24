@@ -22,11 +22,7 @@ class ConsoleLogger:
     def finish(self) -> None:
         self._stream.flush()
 
-    def _flatten_metrics(
-        self,
-        metrics: Mapping[str, Any],
-        prefix: str = "",
-    ) -> list[tuple[str, Any]]:
+    def _flatten_metrics(self, metrics: Mapping[str, Any], prefix: str = "") -> list[tuple[str, Any]]:
         items: list[tuple[str, Any]] = []
 
         for key, value in metrics.items():

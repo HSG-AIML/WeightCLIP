@@ -69,10 +69,7 @@ class HFDataset(CheckpointsDataset):
     def __getitem__(self, index: int) -> Checkpoint:
         model_info = self.model_info_list[index]
         model = self.__loadModel(model_info)
-        return Checkpoint(
-            model = model,
-            metadata = model_info.__dict__
-        )
+        return Checkpoint(model = model, metadata = model_info.__dict__)
         
 
     def __len__(self) -> int:
@@ -93,11 +90,7 @@ class HFDataset(CheckpointsDataset):
         try:
             api = HfApi()
             pipeline_tag = query.tags[0] if query.tags else None
-            matched_models = api.list_models(
-                search=query.keywords,
-                pipeline_tag=pipeline_tag,
-                cardData=True,
-            )
+            matched_models = api.list_models(search=query.keywords, pipeline_tag=pipeline_tag, cardData=True)
 
             for m in matched_models:
                 if m.modelId in query.exclude_modelIds:
